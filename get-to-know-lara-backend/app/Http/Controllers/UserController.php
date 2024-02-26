@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Http\Response;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function register(Request $request): Response
+    public function register(Request $request): JsonResponse
     {
         $request->validate([
             'email' => 'required|email|unique:users,email',
@@ -22,7 +23,7 @@ class UserController extends Controller
         $user->password = Hash::make($request['password']);
         $user->save();
 
-        return response("User registered successfully with name $user->name", 201);
+        return response()->json(["message" => "User registered successfully with name $user->name", "user" => $user], 201);
     }
     public function login(Request $request): Response
     {
