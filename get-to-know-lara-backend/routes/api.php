@@ -23,6 +23,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::resource('/mails', MailController::class);
+    Route::get('/mailsBySender/{id}', [MailController::class, 'getBySenderId']);
+    Route::get('/mailsByReceiver/{id}', [MailController::class, 'getByReceiverId']);
+    Route::get('/usersEmail', [UserController::class, 'getUsersEmailAddresses']);
 });
 
 Route::post('/register', [AuthController::class, 'register']);
