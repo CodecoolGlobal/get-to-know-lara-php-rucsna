@@ -10,7 +10,7 @@ use App\Models\Mail;
 class MailController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the mails.
      */
     public function index(): Collection
     {
@@ -54,5 +54,21 @@ class MailController extends Controller
     public function destroy(string $id): ?bool
     {
         return Mail::destroy($id);
+    }
+
+    /**
+     * Display a listing of the mails by sender.
+     */
+    public function getBySenderId(string $id): Collection
+    {
+        return Mail::where('id_user_from', $id)->get();
+    }
+
+    /**
+     * Display a listing of the mails by receiver.
+     */
+    public function getByReceiverId(string $id): Collection
+    {
+        return Mail::where('id_user_to', $id)->get();
     }
 }
