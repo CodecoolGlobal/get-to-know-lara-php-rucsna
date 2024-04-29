@@ -41,16 +41,25 @@ class MailController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created mail as a draft.
+     * The mail is not sent yet, receiver, subject, message, attachment, reply all optional.
      */
-    public function store(Request $request): Mail
+    public function createDraft(Request $request): Model|Builder
     {
         $request->validate([
-            'subject' => 'required',
-            'message' => 'required'
-            ]);
+            'from' => 'required|exists:users,id',
+            'to' => 'sometimes|nullable|exists:users,id',
+            'reply_to' => 'sometimes|nullable|exists:mails,id'
+        ]);
 
-        return Mail::create($request->all());
+        return Mail::query()->create([
+            'user_id_from' => $request['from'],
+            'user_id_to' => $request['to'],
+            'subject' => $request['subject'],
+            'message' => $request['message'],
+            'attachment' => $request['attachment'],
+            'reply_to' => $request['reply_to']
+        ]);
     }
 
     /**
