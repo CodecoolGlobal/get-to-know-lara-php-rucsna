@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
-//use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection;
-use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -15,7 +12,7 @@ class UserController extends Controller
      */
     public function getUsersEmailAddresses(): Collection
     {
-        $users = User::pluck('email', 'id');
+        $users = User::query()->pluck('email', 'id');
         return $users->map(function ($email, $id) {
             return['id' => $id, 'email' => $email];
     })->values();
