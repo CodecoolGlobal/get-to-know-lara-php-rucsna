@@ -1,18 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import Layout from './Pages/Layout';
-import Router from './router';
+import {RouterProvider} from 'react-router-dom';
 import { ContextProvider } from './contexts/ContextProvider';
+import router from "./router.jsx";
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ContextProvider>
-      <BrowserRouter>
-        <Layout />
-        <Router />
-      </BrowserRouter>
+      <RouterProvider router={router}/>
     </ContextProvider>
   </React.StrictMode>,
 )
