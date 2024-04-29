@@ -63,11 +63,61 @@ class MailController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created mail or update already existing draft.
+     * Create 2 new transactions for sender and receiver.
      */
-    public function show(string $id)
+    public function sendMail(Request $request, ?string $mailId = null)
     {
-        return Mail::findOrFail($id);
+        $request->validate([
+            'from' => 'required|exists:users,id',
+            'to' => 'required|exists:users,id',
+            'reply_to' => 'sometimes|nullable|exists:mails,id'
+        ]);
+        if ($mailId === null) {
+            return DB::transaction(function () use ($request){
+                $newMail = Mail::query()->create([
+                        'user_id_from' => $request['from'],
+                        'user_id_to' => $request['to'],
+                        'subject' => $request['subject'],
+                        'message' => $request['message']
+                ]);
+
+                Transaction::query()->create([
+                        'user_id' => $request['from'],
+                        'mail_id' => $newMail->id,
+                        'sent_at' => now()
+                ]);
+
+                Transaction::query()->create([
+                        'user_id' => $request['to'],
+                        'mail_id' => $newMail->id,
+                        'received_at' => now()
+                ]);
+                return $newMail;
+                });
+        } else {
+               return DB::transaction(function () use ($request, $mailId){
+                    $updatedMail = Mail::query()->find($mailId);
+                    $updatedMail->update([
+                        'user_id_to' => $request['to'],
+                        'subject' => $request['subject'],
+                        'message' => $request['message'],
+                        'attachment' => $request['attachment']
+                    ]);
+                    $updatedMail->save();
+                    Transaction::query()->create([
+                        'user_id' => $request['from'],
+                        'mail_id' => $mailId,
+                        'sent_at' => now()
+                    ]);
+                    Transaction::query()->create([
+                        'user_id' => $request['to'],
+                        'mail_id' => $mailId,
+                        'received_at' => now()
+                    ]);
+                    return $updatedMail;
+                });
+        }
     }
 
     /**
