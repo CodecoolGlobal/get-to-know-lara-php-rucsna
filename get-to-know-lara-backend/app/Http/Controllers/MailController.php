@@ -2,19 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Models\Transaction;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use App\Models\Mail;
+use Illuminate\Support\Facades\DB;
 
 class MailController extends Controller
 {
     /**
-     * Display a listing of the mails.
+     * Mails by user for Inbox and Sent pages.
+     * Get user's name, email, mail subject, and time of sending.
+     * Display a listing of the mails data the user received/sent (latest first).
+     * Only those that are not deleted.
      */
-    public function index(): Collection
+    public function getMailsByUser(string $type, string $userId): \Illuminate\Support\Collection
     {
-        return Mail::all();
+        $user = User::query()->find($userId);
+
+        $mails = $user->mails()
+            ->with(['user_from', 'user_to'])
+            ->whereNotNull($type === 'inbox' ? 'received_at' : 'sent_at')
+            ->orderByDesc($type === 'inbox' ? 'received_at' : 'sent_at')
+            ->get();
+
+        return $mails->map(function ($mail) use ($type) {
+            $user = $type === 'inbox' ? 'user_from' : 'user_to';
+            return [
+                $user . '_name' => $mail->{$user}->name,
+                $user . '_email' => $mail->{$user}->email,
+                'subject' => $mail->subject,
+                'time' => $mail->pivot->{$type === 'inbox' ? 'received_at' : 'sent_at'}
+            ];
+        });
     }
 
     /**
