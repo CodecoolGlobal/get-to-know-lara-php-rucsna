@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axiosClient from "../axios-client";
-import { useStateContext } from "../contexts/ContextProvider";
+import axiosClient from "../../axios-client.js";
+import { useStateContext } from "../../contexts/ContextProvider.jsx";
 
 const Registration = () => {
     const [currentUsername, setCurrentUsername] = useState("");
