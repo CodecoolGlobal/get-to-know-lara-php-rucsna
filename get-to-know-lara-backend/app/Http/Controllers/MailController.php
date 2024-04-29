@@ -121,13 +121,18 @@ class MailController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Display the specified mail.
+     * Update the related transaction with opened_at timestamp.
+     *
      */
-    public function update(Request $request, string $id)
+    public function readMail(string $mailId): Builder|array|Collection|Model
     {
-        $mail = Mail::find($id);
-        $mail->update($request->all());
-        return $mail;
+        $openedMail = Mail::query()->findOrFail($mailId);
+        $openedMail->transactions()
+            ->whereNotNull('received_at')
+            ->whereNull('deleted_at')
+            ->update(['opened_at' => now()]);
+        return $openedMail;
     }
 
     /**
