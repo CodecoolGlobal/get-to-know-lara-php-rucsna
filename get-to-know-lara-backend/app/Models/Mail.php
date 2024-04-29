@@ -12,12 +12,12 @@ class Mail extends Model
     use HasFactory;
     public $timestamps = false;
     protected $fillable = [
-        'id_user_from',
-        'id_user_to',
+        'user_id_from',
+        'user_id_to',
         'subject',
         'message',
-        'is_read',
-        'sent'
+        'attachment',
+        'reply_to'
     ];
 
     public function user_from(): BelongsTo
