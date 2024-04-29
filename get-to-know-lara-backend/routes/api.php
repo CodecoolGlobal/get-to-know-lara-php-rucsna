@@ -22,16 +22,21 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::resource('/mails', MailController::class);
-    Route::get('/mailsBySender/{id}', [MailController::class, 'getBySenderId']);
-    Route::get('/mailsByReceiver/{id}', [MailController::class, 'getByReceiverId']);
-    Route::get('/usersEmail', [UserController::class, 'getUsersEmailAddresses']);
+    Route::get('/mailsByUser/{type}/{id}', [MailController::class, 'getMailsByUser']);
+    Route::post('/mail', [MailController::class, 'createDraft']);
+    Route::post('/sendMail/{id?}', [MailController::class, 'sendMail']);
+    Route::get('/mail/{id}', [MailController::class, 'readMail']);
+
+//    Route::patch('/mail/{id}', [MailController::class, 'update']);
+//    Route::patch('/mail/delete/{id}', [MailController::class, 'remove']);
+//    Route::get('/usersEmail', [UserController::class, 'getUsersEmailAddresses']);
+//    Route::get('/transaction/{id}', [MailController::class, 'getTransactionByUser']);
+//    Route::get('/userByMail/{id}', [MailController::class, 'getUser']);
 });
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-//Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 
 
