@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useStateContext } from "../contexts/ContextProvider";
-import axiosClient from "../axios-client";
+import { useStateContext } from "../../contexts/ContextProvider.jsx";
+import axiosClient from "../../axios-client.js";
 
 const Login = () => {
     const [currentEmail, setCurrentEmail] = useState("");
