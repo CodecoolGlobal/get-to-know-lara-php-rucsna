@@ -21,10 +21,11 @@ class MailController extends Controller
      */
     public function getMailsByUser(string $type, string $userId): \Illuminate\Support\Collection
     {
-        $user = User::query()->find($userId);
+        $user = User::query()->findOrFail($userId);
 
         $mails = $user->mails()
             ->with(['user_from', 'user_to'])
+            ->whereNull('deleted_at')
             ->whereNotNull($type === 'inbox' ? 'received_at' : 'sent_at')
             ->orderByDesc($type === 'inbox' ? 'received_at' : 'sent_at')
             ->get();
@@ -35,7 +36,8 @@ class MailController extends Controller
                 $user . '_name' => $mail->{$user}->name,
                 $user . '_email' => $mail->{$user}->email,
                 'subject' => $mail->subject,
-                'time' => $mail->pivot->{$type === 'inbox' ? 'received_at' : 'sent_at'}
+                'time' => $mail->pivot->{$type === 'inbox' ? 'received_at' : 'sent_at'},
+                'opened_at' => $mail->pivot->opened_at
             ];
         });
     }
@@ -123,39 +125,69 @@ class MailController extends Controller
     /**
      * Display the specified mail.
      * Update the related transaction with opened_at timestamp.
-     *
      */
     public function readMail(string $mailId): Builder|array|Collection|Model
     {
-        $openedMail = Mail::query()->findOrFail($mailId);
-        $openedMail->transactions()
+        $mailToOpen = Mail::query()->findOrFail($mailId);
+        $mailToOpen->transactions()
             ->whereNotNull('received_at')
             ->whereNull('deleted_at')
             ->update(['opened_at' => now()]);
-        return $openedMail;
+        return $mailToOpen;
     }
 
     /**
      * Remove the specified resource from storage.
+     * Update the related transaction with deleted_at timestamp.
      */
-    public function destroy(string $id): ?bool
+    public function remove(string $mailId, string $userId): Model|Collection|Builder|array|null
     {
-        return Mail::destroy($id);
+        $mailToDelete = Mail::query()->findOrFail($mailId);
+        $mailToDelete->transactions()
+            ->where('user_id', $userId)
+            ->whereNull('deleted_at')
+            ->update(['deleted_at' => now()]);
+        return $mailToDelete;
     }
 
     /**
-     * Display a listing of the mails by sender.
+     *
      */
-    public function getBySenderId(string $id): Collection
+    public function getDeletedMails(string $userId)
     {
-        return Mail::where('id_user_from', $id)->get();
+        $user = User::query()->findOrFail($userId);
+
+        $deletedMails = $user->mails()->whereNotNull('deleted_at')->orderByDesc('deleted_at')->get();
+
+        return $deletedMails->map(function ($mail) use ($userId){
+            $user = $mail->user_id_from === $userId ? 'user_from' : 'user_to';
+            return [
+                $user . '_name' => $mail->{$user}->name,
+                $user . '_email' => $mail->{$user}->email,
+                'subject' => $mail->subject,
+                'time' => $mail->pivot->deleted_at
+            ];
+        });
     }
 
-    /**
-     * Display a listing of the mails by receiver.
-     */
-    public function getByReceiverId(string $id): Collection
+    public function getDraftsByUser(string $userId)
     {
-        return Mail::where('id_user_to', $id)->get();
+        // get all mail by user where userId == user_id_from
+        // omit the mails that has transactions
+        // return those
     }
+
+//
+
+
+//    public function getTransactionByUser(string $id){
+//        $user = User::query()->find($id);
+//        return $user->received()->get();
+//    }
+//
+//    public function getUser(string $id)
+//    {
+//        $mail = Mail::query()->find($id);
+//        return $mail->user_to()->get();
+//    }
 }
