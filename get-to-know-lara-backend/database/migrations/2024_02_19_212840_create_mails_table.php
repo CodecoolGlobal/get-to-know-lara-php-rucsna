@@ -12,17 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('mails', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedBigInteger('id_user_from')->nullable();
-            $table->unsignedBigInteger('id_user_to')->nullable();
-            $table->string('subject');
-            $table->text('message');
-            $table->boolean('is_read')->default(false);
-            $table->timestamp('sent')->nullable();
-            $table->timestamp('created')->useCurrent();
-
-            $table->foreign('id_user_from')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('id_user_to')->references('id')->on('users')->onDelete('set null');
+            $table->id();
+            $table->foreignId('user_id_from')->constrained('users')->onDelete('restrict');
+            $table->foreignId('user_id_to')->nullable()->constrained('users')->onDelete('restrict');
+            $table->string('subject')->nullable();
+            $table->text('message')->nullable();
+            $table->binary('attachment')->nullable();
+            $table->foreignId('reply_to')->nullable()->constrained('mails')->onDelete('set null');
+            $table->timestamp('created_at')->useCurrent();
         });
     }
 
