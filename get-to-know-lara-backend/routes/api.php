@@ -21,21 +21,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/mailsByUser/{type}/{id}', [MailController::class, 'getMailsByUser']);
-    Route::post('/mail', [MailController::class, 'createDraft']);
-    Route::post('/sendMail/{id?}', [MailController::class, 'sendMail']);
-    Route::get('/mail/{id}', [MailController::class, 'readMail']);
+    Route::post('/authentication/logout', [AuthController::class, 'logout']);
 
-//    Route::patch('/mail/{id}', [MailController::class, 'update']);
-//    Route::patch('/mail/delete/{id}', [MailController::class, 'remove']);
-//    Route::get('/usersEmail', [UserController::class, 'getUsersEmailAddresses']);
-//    Route::get('/transaction/{id}', [MailController::class, 'getTransactionByUser']);
-//    Route::get('/userByMail/{id}', [MailController::class, 'getUser']);
+    Route::get('/mail/mailsByUser/{type}/{id}', [MailController::class, 'getMailsByUser']);
+    Route::post('/mail/draft', [MailController::class, 'createDraft']);
+    Route::post('/mail/sendMail/{id?}', [MailController::class, 'sendMail']);
+    Route::patch('/mail/display/{id}', [MailController::class, 'displayMail']);
+    Route::patch('/mail/delete/{mailId}/{userId}', [MailController::class, 'remove']);
+    Route::get('/mail/deletedMails/{userId}', [MailController::class, 'getDeletedMails']);
+    Route::patch('mail/restore/{mailId}/{userId}', [MailController::class, 'restoreDeletedMail']);
+    Route::delete('/mail/deleteDraft/{id}', [MailController::class, 'deleteDraft']);
+    Route::get('/mail/displayDrafts/{userId}', [MailController::class, 'getDraftsByUser']);
+
+    Route::get('/user/addresses', [UserController::class, 'getUsersEmailAddresses']);
 });
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/authentication/register', [AuthController::class, 'register']);
+Route::post('/authentication/login', [AuthController::class, 'login']);
 
 
 
