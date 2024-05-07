@@ -25,12 +25,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/mail/mailsByUser/{type}/{id}', [MailController::class, 'getMailsByUser']);
     Route::post('/mail/draft', [MailController::class, 'createDraft']);
-    Route::post('/mail/sendMail/{id?}', [MailController::class, 'sendMail']);
-    Route::patch('/mail/display/{id}', [MailController::class, 'displayMail']);
+    Route::post('/mail/sendMail/{mailId?}', [MailController::class, 'sendMail']);
+    Route::patch('/mail/display/{mailId}', [MailController::class, 'displayMail']);
     Route::patch('/mail/delete/{mailId}/{userId}', [MailController::class, 'remove']);
     Route::get('/mail/deletedMails/{userId}', [MailController::class, 'getDeletedMails']);
     Route::patch('mail/restore/{mailId}/{userId}', [MailController::class, 'restoreDeletedMail']);
-    Route::delete('/mail/deleteDraft/{id}', [MailController::class, 'deleteDraft']);
+    Route::delete('/mail/deleteDraft/{mailId}/{userId}', [MailController::class, 'deleteDraft']);
     Route::get('/mail/displayDrafts/{userId}', [MailController::class, 'getDraftsByUser']);
 
     Route::get('/user/addresses', [UserController::class, 'getUsersEmailAddresses']);
