@@ -3,7 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -44,12 +48,22 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    /**
+     * @throws Exception
+     */
+    public static function findUser($id): Model|Collection|Builder|array
+    {
+        $user = static::query()->find($id);
+        if(!$user){
+            throw new Exception('User not found');
+        }
+        return $user;
+    }
+
     public function mails(): BelongsToMany
     {
         return $this
             ->belongsToMany(Mail::class, 'transactions', 'user_id', 'mail_id')
-            ->withPivot('received_at', 'sent_at')
-            ->whereNull('deleted_at');
+            ->withPivot('received_at', 'sent_at', 'deleted_at', 'opened_at');
     }
-
 }
