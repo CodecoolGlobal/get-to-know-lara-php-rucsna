@@ -4,19 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\DraftRequest;
 use App\Http\Requests\SendMailRequest;
-use App\Models\Transaction;
-use App\Models\User;
+use App\Http\Requests\TransactionUpdateRequest;
 use App\Services\MailService;
 use Exception;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use App\Models\Mail;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Validator;
 
 class MailController extends Controller
 {
@@ -36,12 +28,21 @@ class MailController extends Controller
     public function getMailsByUser(string $type, string $userId): JsonResponse
     {
         try {
-            $mailsResponse = $this->mailService->getMailsByUser($type, $userId);
+            if($type === 'inbox'){
+                $mailsResponse = $this->mailService->getMailsToUser($userId);
+            } else if($type === 'sent'){
+                $mailsResponse = $this->mailService->getMailsFromUser($userId);
+            } else if($type === 'draft'){
+                $mailsResponse = $this->mailService->getDraftsByUser($userId);
+            } else if($type === 'deleted'){
+                $mailsResponse = $this->mailService->getDeletedMails($userId);
+            }
+            //$mailsResponse = $this->mailService->getMailsByUser($type, $userId);
             return response()->json([
                 'mails' => $mailsResponse
             ], Response::HTTP_OK);
         } catch (Exception $exception) {
-            return \response()->json([
+            return response()->json([
                 'message' => 'Error fetching mails' . $exception->getMessage()
             ], Response::HTTP_BAD_REQUEST);
         }
@@ -54,7 +55,7 @@ class MailController extends Controller
     public function createDraft(DraftRequest $request): JsonResponse
     {
         try {
-            $newDraft = Mail::query()->create($request->allowed());
+            $newDraft = $this->mailService->createDraft($request);
             return response()->json([
                 'draft' => $newDraft
             ], Response::HTTP_OK);
@@ -69,14 +70,10 @@ class MailController extends Controller
      * Store a newly created mail or update already existing draft.
      * Create 2 new transactions for sender and receiver.
      */
-    public function sendMail(SendMailRequest $request, ?string $mailId = null): JsonResponse
+    public function sendNewMail(SendMailRequest $request): JsonResponse
     {
         try {
-            if ($mailId === null) {
-                $mailToSend = $this->mailService->createMailWithTransactions($request);
-            } else {
-                $mailToSend = $this->mailService->updateMailWithTransactions($request, $mailId);
-            }
+            $mailToSend = $this->mailService->sendNewMail($request);
             if(!$mailToSend){
                 return response()->json(['message' => 'Error creating or updating mail'], Response::HTTP_BAD_REQUEST);
             }
@@ -86,7 +83,25 @@ class MailController extends Controller
             ], Response::HTTP_OK);
         } catch (Exception $exception) {
             return response()->json([
-                'message' => 'Error sending mail' . $exception->getMessage()
+                'message' => 'Error sending mail - ' . $exception->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function sendUpdatedMail($mailId, SendMailRequest $request): JsonResponse
+    {
+        try {
+            $mailToSend = $this->mailService->sendUpdatedMail($mailId, $request);
+            if(!$mailToSend){
+                return response()->json(['message' => 'Error creating or updating mail'], Response::HTTP_BAD_REQUEST);
+            }
+            return response()->json([
+                'mail' => $mailToSend,
+                'message' => 'Mail successfully sent'
+            ], Response::HTTP_OK);
+        } catch (Exception $exception) {
+            return response()->json([
+                'message' => 'Error sending mail - ' . $exception->getMessage()
             ], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -96,10 +111,14 @@ class MailController extends Controller
      * Update the related transaction with opened_at timestamp.
      * @throws Exception
      */
-    public function displayMail(string $mailId): JsonResponse
+    public function displayMail($type, TransactionUpdateRequest $request): JsonResponse
     {
         try {
-            $mailToDisplay = $this->mailService->displayMail($mailId);
+            if($type === 'mail') {
+                $mailToDisplay = $this->mailService->displayMail($request);
+            } else if($type === 'draft'){
+                $mailToDisplay = $this->mailService->displayDraft($request);
+            }
             return response()->json([
                 'mail' => $mailToDisplay
             ], Response::HTTP_OK);
@@ -114,10 +133,10 @@ class MailController extends Controller
      * Soft delete the specified mail.
      * Update the related transaction with deleted_at timestamp.
      */
-    public function remove(string $mailId, string $userId): JsonResponse
+    public function remove(TransactionUpdateRequest $request): JsonResponse
     {
         try {
-            $deletedMail = $this->mailService->deleteMail($userId, $mailId);
+            $deletedMail = $this->mailService->deleteMail($request);
             return response()->json([
                 'mail' => $deletedMail
             ], Response::HTTP_OK);
@@ -151,10 +170,10 @@ class MailController extends Controller
      * Restore the user's deleted mails.
      * Set the 'deleted_at' field back to null.
      */
-    public function restoreDeletedMail(string $mailId, string $userId): JsonResponse
+    public function restoreMail(TransactionUpdateRequest $request): JsonResponse
     {
         try {
-            $restoredMail = $this->mailService->restoreDeletedMails($userId, $mailId);
+            $restoredMail = $this->mailService->restoreMail($request);
             return response()->json([
                 'mail' => $restoredMail
             ], Response::HTTP_OK);
