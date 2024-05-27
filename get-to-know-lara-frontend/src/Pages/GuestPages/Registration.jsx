@@ -4,11 +4,10 @@ import axiosClient from "../../axios-client.js";
 import { useStateContext } from "../../contexts/ContextProvider.jsx";
 
 const Registration = () => {
-    const [currentUsername, setCurrentUsername] = useState("");
+    const [currentName, setCurrentName] = useState("");
     const [currentEmail, setCurrentEmail] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
     const [passwordConf, setPasswordConf] = useState("");
-    const [errors, setErrors] = useState(null);
 
     const { setUser, storeToken } = useStateContext();
     const navigate = useNavigate();
@@ -17,78 +16,74 @@ const Registration = () => {
         event.preventDefault();
 
         const newUser = {
-            name: currentUsername,
+            name: currentName,
             email: currentEmail,
             password: currentPassword,
             password_confirmation: passwordConf
         };
-        setErrors(null);
 
         try {
-            const { data } = await axiosClient.post('/register', newUser);
+            const { data } = await axiosClient.post('/authentication/register', newUser);
             console.log(data);
             setUser(data.user);
             storeToken(data.token);
             navigate('/');
             
-        } catch (err) {
-            const response = err.response;
-            if (response && response.status === 422) {
-                setErrors(response.data.errors);
-                console.error(response.data.errors);
-            }
+        } catch (error) {
+            console.error("error with registration", error);
         }
     };
 
 
     return (
-        <div className="mb-3">
-            <label className="form-label">New on the page? Please, sign up!</label>
-            {errors &&
-                <div className="alert alert-danger" role="alert">
-                    {Object.keys(errors).map(key => (
-                        <p key={key}>{errors[key][0]}</p>
-                    ))}
-                </div>
-            }
+        <div className="container">
+            <div className="row justify-content-center">
+                <div className="col-md-6 col-lg-4">
+            <fieldset>
+            <legend className="text-center">New on the page? Please, sign up!</legend>
             <form onSubmit={submitRegistration}>
-                <div className="mb-3">
+
+                <div className="mb-3 mt-5">
+                    <label htmlFor="inputName" className="form-label">Name</label>
                     <input
                         type="text"
                         className="form-control"
-                        id="inputUsername"
-                        placeholder="Username"
-                        onChange={e => setCurrentUsername(e.target.value)} />
+                        id="inputName"
+                        onChange={e => setCurrentName(e.target.value)}/>
                 </div>
+
                 <div className="mb-3">
+                    <label htmlFor="inputEmail" className="form-label">Email address</label>
                     <input
                         type="email"
                         className="form-control"
                         id="inputEmail"
-                        placeholder="example@email.com"
                         onChange={e => setCurrentEmail(e.target.value)} />
                 </div>
+
                 <div className="mb-3">
+                    <label htmlFor="inputPassword" className="form-label">Password</label>
                     <input
                         type="password"
                         className="form-control"
                         id="inputPassword"
-                        placeholder="Password"
                         onChange={e => setCurrentPassword(e.target.value)} />
                 </div>
+
                 <div className="mb-3">
+                    <label htmlFor="inputPasswordConf">Confirm password</label>
                     <input
                         type="password"
                         className="form-control"
                         id="inputPasswordConf"
-                        placeholder="Confirm password"
                         onChange={e => setPasswordConf(e.target.value)} />
                 </div>
+
                 <button type="submit" className="btn btn-primary">Submit</button>
-                <p>
-                    Already registered? <Link to="/login">Log in to your account</Link>
-                </p>
             </form>
+            </fieldset>
+                </div>
+            </div>
         </div>
     )
 }
