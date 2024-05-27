@@ -66,4 +66,45 @@ class User extends Authenticatable
             ->belongsToMany(Mail::class, 'transactions', 'user_id', 'mail_id')
             ->withPivot('received_at', 'sent_at', 'deleted_at', 'opened_at');
     }
+
+    public function sentMails(): BelongsToMany
+    {
+        return $this
+            ->belongsToMany(Mail::class, 'transactions', 'user_id', 'mail_id')
+            ->where('is_draft', false)
+            ->wherePivotNull('received_at')
+            ->wherePivotNull('deleted_at')
+            ->withPivot('sent_at', 'opened_at', 'deleted_at')
+            ->orderByDesc('sent_at');
+    }
+
+    public function receivedMails(): BelongsToMany
+    {
+        return $this
+            ->belongsToMany(Mail::class, 'transactions', 'user_id', 'mail_id')
+            ->where('is_draft', false)
+            ->wherePivotNull('sent_at')
+            ->wherePivotNull('deleted_at')
+            ->withPivot('received_at', 'opened_at', 'deleted_at')
+            ->orderByDesc('received_at');
+    }
+
+    public function deletedMails(): BelongsToMany
+    {
+        return $this
+            ->belongsToMany(Mail::class, 'transactions', 'user_id', 'mail_id')
+            ->where('is_draft', false)
+            ->wherePivotNotNull('deleted_at')
+            ->withPivot('opened_at', 'deleted_at')
+            ->orderBy('deleted_at');
+    }
+
+    public function drafts(): BelongsToMany
+    {
+        return $this
+            ->belongsToMany(Mail::class, 'transactions', 'user_id', 'mail_id')
+            ->where('is_draft', true)
+            ->withPivot('opened_at')
+            ->orderByDesc('created_at');
+    }
 }
