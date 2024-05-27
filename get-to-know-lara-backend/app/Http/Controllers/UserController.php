@@ -10,11 +10,18 @@ class UserController extends Controller
     /**
      * Display a listing of the users' email addresses.
      */
-    public function getUsersEmailAddresses(): Collection
+    public function getUsersEmailAddresses($term): Collection
     {
-        $users = User::query()->pluck('email', 'id');
-        return $users->map(function ($email, $id) {
-            return['id' => $id, 'email' => $email];
-    })->values();
+        $users = User::query()
+            ->where(function($query) use ($term){
+                $query->where('name', 'like', '%' . $term . '%')
+                    ->orWhere('email', 'like', '%' . $term . '%');
+            })
+            ->select('name','email', 'id')
+            ->get();
+
+        return $users->map(function ($user) {
+            return['id' => $user->id, 'name' => $user->name, 'email' => $user->email];
+        })->values();
     }
 }
