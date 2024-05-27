@@ -25,15 +25,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/mail/mailsByUser/{type}/{id}', [MailController::class, 'getMailsByUser']);
     Route::post('/mail/draft', [MailController::class, 'createDraft']);
-    Route::post('/mail/sendMail/{mailId?}', [MailController::class, 'sendMail']);
-    Route::patch('/mail/display/{mailId}', [MailController::class, 'displayMail']);
-    Route::patch('/mail/delete/{mailId}/{userId}', [MailController::class, 'remove']);
-    Route::get('/mail/deletedMails/{userId}', [MailController::class, 'getDeletedMails']);
-    Route::patch('mail/restore/{mailId}/{userId}', [MailController::class, 'restoreDeletedMail']);
-    Route::delete('/mail/deleteDraft/{mailId}/{userId}', [MailController::class, 'deleteDraft']);
-    Route::get('/mail/displayDrafts/{userId}', [MailController::class, 'getDraftsByUser']);
+    Route::post('/mail/send', [MailController::class, 'sendNewMail']);
+    Route::post('/mail/send/{mailId}', [MailController::class, 'sendUpdatedMail']);
+    Route::patch('/mail/display/{type}', [MailController::class, 'displayMail']);
+    Route::patch('/mail/delete', [MailController::class, 'remove']);
+    //Route::get('/mail/deletedMails/{userId}', [MailController::class, 'getDeletedMails']);
+    Route::patch('mail/restore', [MailController::class, 'restoreMail']);
 
-    Route::get('/user/addresses', [UserController::class, 'getUsersEmailAddresses']);
+    Route::delete('/mail/deleteDraft/{mailId}/{userId}', [MailController::class, 'deleteDraft']);
+    //Route::get('/mail/drafts/{userId}', [MailController::class, 'getDraftsByUser']);
+
+    Route::get('/user/addresses/{term}', [UserController::class, 'getUsersEmailAddresses']);
+    Route::get('/sentMails/{id}/{mailId}', [MailController::class, 'sentMails']);
 });
 
 Route::post('/authentication/register', [AuthController::class, 'register']);
