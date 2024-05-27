@@ -1,43 +1,48 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import axiosClient from "../../axios-client.js";
-import {useNavigate, useParams} from "react-router-dom";
+import {useParams, useNavigate} from "react-router-dom";
+import {useStateContext} from "../../contexts/ContextProvider.jsx";
 
 const CurrentMail = () => {
     const [mail, setMail] = useState(null);
     const navigate = useNavigate();
+    const {user} = useStateContext();
     const {id} = useParams();
 
     console.log("MAIL ID", id);
-    
+
     useEffect(() => {
         const getMailById = async () => {
-            try {
-                const { data } = await axiosClient.get(`/mail/${id}`);
-                setMail(data);
-                console.log(data);
-            } catch (error) {
-                console.error(error);
-            }
+            axiosClient.patch(`/mail/display/mail`, {user_id: user.id, mail_id: id}
+                )
+                .then((response) => {
+                    console.log("mail marked as read successfully", response.data);
+                    setMail(response.data.mail);
+                })
+                .catch(error => {
+                    console.error("error with updating mail", error);
+                })
         };
         getMailById().then();
-    }, [id]);
-
-    const handleRedirection = () => {
-        navigate('/inbox');
-    };
+    }, [id, user.id]);
 
     return (
-        
-        <div>
+        <div className="container">
             {mail &&
-            <div>
-            <button onClick={handleRedirection}>&#x2190;</button>
-            <ul>From: {mail.id_user_from}</ul>
-            <ul>To: {mail.id_user_to}</ul>
-            <ul>{mail.sent}</ul>
-            <ul>{mail.subject}</ul>
-            <ul>{mail.message}</ul>
-            </div>}
+                <div className="card">
+                    <ul className="list-group list-group-flush">
+                        <li className="list-group-item">From: {mail.user_from_name} - {mail.user_from_email}</li>
+                        <li className="list-group-item">To: {mail.user_to_name} - {mail.user_to_email}</li>
+                        <li className="list-group-item">Date: {mail.received === null ? mail.sent : mail.received}</li>
+                    </ul>
+                    <div className="card-body">
+                        <h6 className="card-subtitle mb-2">Subject: {mail.subject}</h6>
+                        <p className="card-text">{mail.message}</p>
+                    </div>
+                    <div className="card-body">
+                        <a onClick={() => navigate(-1)} className="card-link">Back</a>
+                    </div>
+                </div>}
         </div>
     )
 }
