@@ -1,32 +1,29 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import {useStateContext} from "../../contexts/ContextProvider.jsx";
 import axiosClient from "../../axios-client.js";
+import MailsTable from "../../Components/MailsTable.jsx";
 
 const Sent = () => {
     const [mails, setMails] = useState([]);
     const {user} = useStateContext();
 
     useEffect(() => {
-        const getSent = () => {
-            axiosClient.get(`/mailsBySender/${user.id}`)
-                .then(response => {
-                    setMails(response.data);
-                    console.log(response.data);
-                })
-                .catch (error => console.error("Error with getting mails", error))
-        };
-        getSent();
+        getSentMails();
     }, [user.id]);
-    
 
-    return(
+    const getSentMails = () => {
+        axiosClient.get(`/mail/mailsByUser/sent/${user.id}`)
+            .then(response => {
+                setMails(response.data.mails);
+                console.log(response.data.mails);
+            })
+            .catch(error => console.error("Error fetching mails", error))
+    };
+    
+    return (
         <div>
-           {mails &&
-                mails.map(mail => (
-                    <div key={mail.id}>
-                        <p>{mail.id_user_to} - {mail.subject}</p>
-                    </div>
-                ))
+            {mails &&
+                <MailsTable mails={mails} setMails={setMails} getCurrent={getSentMails} label={"To: "}/>
             }
         </div>
     )
