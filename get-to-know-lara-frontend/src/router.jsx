@@ -9,59 +9,79 @@ import Compose from "./Pages/UserPages/Compose.jsx";
 import Sent from "./Pages/UserPages/Sent.jsx";
 import CurrentMail from "./Pages/UserPages/CurrentMail.jsx";
 import About from "./Pages/GuestPages/About.jsx";
+import Bin from "./Pages/UserPages/Bin.jsx";
+import Drafts from "./Pages/UserPages/Drafts.jsx";
+import Update from "./Pages/UserPages/Update.jsx";
+import Dashboard from "./Components/Dashboard.jsx";
 
 const router = createBrowserRouter([
     {
         path: '/',
-        element: <UserLayout />,
+        element: <UserLayout/>,
         children: [
             {
-              path: '/',
-              element: <Navigate to='/inbox' />
+                path: '/',
+                element: <Navigate to='/dashboard'/>
+            },
+            {
+                path: '/dashboard',
+                element: <Dashboard/>
             },
             {
                 path: '/inbox',
-                element: <Inbox />
+                element: <Inbox/>
             },
             {
                 path: '/compose',
-                element: <Compose />
+                element: <Compose/>
+            },
+            {
+                path: '/drafts',
+                element: <Drafts/>
+            },
+            {
+                path: '/draft/:id',
+                element: <Update/>
             },
             {
                 path: '/sent',
-                element: <Sent />
+                element: <Sent/>
+            },
+            {
+                path: '/bin',
+                element: <Bin/>
             },
             {
                 path: '/currentMail/:id',
-                element: <CurrentMail />
+                element: <CurrentMail/>
             }
         ]
     },
     {
         path: '/',
-        element: <GuestLayout />,
+        element: <GuestLayout/>,
         children: [
             {
                 path: '/',
-                element: <Login />
+                element: <Login/>
             },
             {
-              path: '/about',
-              element: <About />
+                path: '/about',
+                element: <About/>
             },
             {
                 path: '/login',
-                element: <Login />
+                element: <Login/>
             },
             {
                 path: '/registration',
-                element: <Registration />
+                element: <Registration/>
             }
         ]
     },
     {
         path: '*',
-        element: <NotFound />
+        element: <NotFound/>
     }
 ]);
 export default router;
