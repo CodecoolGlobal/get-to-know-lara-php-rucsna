@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Mail extends Model
 {
@@ -17,17 +18,22 @@ class Mail extends Model
         'subject',
         'message',
         'attachment',
-        'reply_to'
+        'reply_to',
+        'is_draft'
     ];
 
-    public function user_from(): BelongsTo
+    public function user_from(): HasOneThrough
     {
-        return $this->belongsTo(User::class,'user_id_from', 'id');
+        return $this
+            ->hasOneThrough(User::class, Transaction::class, 'mail_id', 'id', 'id', 'user_id')
+            ->whereNotNull('sent_at');
     }
 
-    public function user_to(): BelongsTo
+    public function user_to(): HasOneThrough
     {
-        return $this->belongsTo(User::class, 'user_id_to', 'id');
+        return $this
+            ->hasOneThrough(User::class, Transaction::class, 'mail_id', 'id', 'id', 'user_id')
+            ->whereNotNull('received_at');
     }
 
     public function transactions(): HasMany
