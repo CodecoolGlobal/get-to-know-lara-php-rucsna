@@ -26,7 +26,9 @@ class SendMailRequest extends FormRequest
             'user_id_from' => 'required|exists:users,id',
             'user_id_to' => 'required|exists:users,id',
             'subject' => 'max:100',
-            'reply_to' => 'sometimes|nullable|exists:mails,id'
+            'is_draft' => 'required|boolean',
+            'reply_to' => 'sometimes|nullable|exists:mails,id',
+            'mail_id' => 'sometimes|nullable|exists:mails,id'
         ];
     }
 
@@ -37,11 +39,9 @@ class SendMailRequest extends FormRequest
             'user_id_to',
             'subject',
             'message',
+            'is_draft',
             'reply_to',
-            'attachment',
-            'mail_id',
-            'sent_at',
-            'received_at'
+            'attachment'
         ]);
     }
 }
