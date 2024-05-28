@@ -2,12 +2,14 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useStateContext} from "../../contexts/ContextProvider.jsx";
 import axiosClient from "../../axios-client.js";
+import ErrorToastMessage from "../../Components/ErrorToastMessage.jsx";
 
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [emailValid, setEmailValid] = useState(true);
     const [passwordValid, setPasswordValid] = useState(true);
+    const [loginSuccess, setLoginSuccess] = useState(true);
 
     const navigate = useNavigate();
     const {setUser, storeToken} = useStateContext();
@@ -51,6 +53,7 @@ const Login = () => {
             navigate('/');
 
         } catch (err) {
+            setLoginSuccess(false);
             console.error("error logging in", err);
         }
     };
@@ -97,6 +100,9 @@ const Login = () => {
                         </form>
                     </fieldset>
                 </div>
+                {!loginSuccess &&
+                    <ErrorToastMessage toastHeader={"Login failed"} toastMessage={"Username or password is invalid"}/>
+                }
             </div>
         </div>
     )
