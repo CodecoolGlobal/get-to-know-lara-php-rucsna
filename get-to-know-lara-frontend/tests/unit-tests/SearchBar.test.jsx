@@ -26,9 +26,16 @@ describe('SearchBar component', () => {
     test('renders with initial email when prop exists', () => {
         render(<SearchBar setUser={setUser} email={"test@example.com"}/>);
 
-        expect(screen.getByPlaceholderText('test@example.com', {exact: false})).toBeInTheDocument();
-        expect(screen.getByPlaceholderText('test@example.com').value).toBe('test@example.com');
+        const input = screen.getByPlaceholderText('test@example.com', {exact: false});
+        expect(input).toBeInTheDocument();
+        expect(input.value).toBe('test@example.com');
     });
 
+    test('renders with empty value when email prop does not exists', () => {
+        render(<SearchBar setUser={setUser}/>);
 
+        const input = screen.getByRole('combobox');
+        expect(input).toBeInTheDocument();
+        expect(input.value).toBe('');
+    })
 })
