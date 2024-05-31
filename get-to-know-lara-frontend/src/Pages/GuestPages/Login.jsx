@@ -1,70 +1,116 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useStateContext } from "../../contexts/ContextProvider.jsx";
+import {useCallback, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {useStateContext} from "../../contexts/ContextProvider.jsx";
 import axiosClient from "../../axios-client.js";
+import ErrorToastMessage from "../../Components/ErrorToastMessage.jsx";
+
+import {Button, Form} from "react-bootstrap";
+import FormContainer from "../../Components/FormContainer.jsx";
 
 const Login = () => {
-    const [currentEmail, setCurrentEmail] = useState("");
-    const [currentPassword, setCurrentPassword] = useState("");
+    const [form, setForm] = useState({
+        email: "",
+        password: ""
+    });
+    const [errors, setErrors] = useState({});
+    const [loginSuccess, setLoginSuccess] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     const navigate = useNavigate();
-    const { setUser, storeToken } = useStateContext();
+    const {setUser, storeToken} = useStateContext();
 
-    const submitLogin = async (event) => {
+
+    const handleFieldChange = useCallback((field, value) => {
+        setForm(prevForm => ({...prevForm, [field]: value}));
+        if(errors[field]){
+            setErrors(prevErrors => ({...prevErrors, [field]: null}));
+        }
+    },[errors]);
+
+    
+    const validateForm = () => {
+        const {email, password} = form;
+        const newErrors = {};
+
+        if(!email){
+            newErrors.email = "Please, enter your email address.";
+        }
+        if(!password){
+            newErrors.password = "Please, enter your password.";
+        }
+        return newErrors;
+    }
+
+
+    const submitLogin = useCallback(async (event) => {
         event.preventDefault();
 
-        const currentUser = {
-            email: currentEmail,
-            password: currentPassword
-        };
-
+        const formErrors = validateForm();
+        if(Object.keys(formErrors).length > 0){
+            setErrors(formErrors);
+            return;
+        }
+        
+        setIsLoading(true);
         try {
-            const { data } = await axiosClient.post('/authentication/login', currentUser);
-            console.log(data);
+            const {data} = await axiosClient.post('/authentication/login', form);
             setUser(data.user);
             storeToken(data.token);
             navigate('/');
-
         } catch (err) {
-           console.error("error logging in", err);
+            setLoginSuccess(false);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, [form, navigate, setUser, storeToken]);
+
 
     return (
-        <div className="container">
-            <div className="row justify-content-center">
-                <div className="col-md-6 col-lg-4">
-            <fieldset>
-                <legend className="text-center">Have an account? Please, log in!</legend>
-                <form className="mx-auto" id="login-form" onSubmit={submitLogin}>
+            <FormContainer>
+                <fieldset>
+                <legend className="text-sm-center fs-5 fst-italic">Have an account? Please, log in!</legend>
 
-                    <div className="mb-3 mt-5">
-                        <label htmlFor="inputEmail" className="form-label">Email address</label>
-                        <input
+                <Form className="mt-5" onSubmit={submitLogin} noValidate>
+                    <Form.Group controlId="email">
+                        <Form.Label>Email address</Form.Label>
+                        <Form.Control
+                            className="mb-2"
                             type="email"
-                            className="form-control"
-                            id="inputEmail"
-                            aria-describedby="emailHelp"
-                            onChange={e => setCurrentEmail(e.target.value)}/>
-                    </div>
+                            value={form.email}
+                            onChange={(e) => handleFieldChange('email', e.target.value)}
+                            isInvalid={!!errors.email}
+                            required
+                        />
+                        <Form.Control.Feedback className="fs-6 fst-italic" type="invalid">
+                            {errors.email}
+                        </Form.Control.Feedback>
+                    </Form.Group>
 
-                    <div className="mb-3">
-                        <label htmlFor="inputPassword" className="form-label">Password</label>
-                        <input
+                    <Form.Group className="mt-4" controlId="password">
+                    <Form.Label>Password</Form.Label>
+                        <Form.Control
+                            className="mb-2"
                             type="password"
-                            className="form-control"
-                            id="inputPassword"
-                            onChange={e => setCurrentPassword(e.target.value)}/>
-                        <div id="emailHelp" className="form-text">Forget password?</div>
-                    </div>
+                            value={form.password}
+                            onChange={(e) => handleFieldChange('password', e.target.value)}
+                            isInvalid={!!errors.password}
+                            required
+                        />
+                        <Form.Control.Feedback className="fs-6 fst-italic" type="invalid">
+                            {errors.password}
+                        </Form.Control.Feedback>
+                    </Form.Group>
 
-                    <button type="submit" className="btn btn-primary">Login</button>
-                </form>
-            </fieldset>
-                </div>
-            </div>
-        </div>
-)
+                    {!loginSuccess &&
+                        <ErrorToastMessage toastHeader={"Login failed"} toastMessage={"Username or password is invalid"}/>
+                    }
+                    <Button className="mt-4" variant="secondary" type="submit" disabled={isLoading}>
+                        {isLoading ? 'Logging in...' : 'Login'}
+                    </Button>
+                </Form>
+                </fieldset>
+            </FormContainer>
+    )
 }
 
 export default Login;
