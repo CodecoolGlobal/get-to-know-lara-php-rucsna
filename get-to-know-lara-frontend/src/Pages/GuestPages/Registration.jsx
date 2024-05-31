@@ -1,182 +1,212 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {useCallback, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import axiosClient from "../../axios-client.js";
-import { useStateContext } from "../../contexts/ContextProvider.jsx";
+import {useStateContext} from "../../contexts/ContextProvider.jsx";
 import FormContainer from "../../Components/FormContainer.jsx";
 import {Button, Col, Form, Row} from "react-bootstrap";
+import ErrorToastMessage from "../../Components/ErrorToastMessage.jsx";
 
 const Registration = () => {
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [passwordConf, setPasswordConf] = useState("");
-    const [firstNameError, setFirstNameError] = useState("");
-    const [lastNameError, setLastNameError] = useState("");
-    const [emailError, setEmailError] = useState("");
-    const [passwordError, setPasswordError] = useState("");
-    const [passwordConfError, setPasswordConfError] = useState("");
+    const [form, setForm] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        passwordConf: ""
+    });
+    const [errors, setErrors] = useState({});
+    const [registrationSuccess, setRegistrationSuccess] = useState(true);
+    const [toastMessage, setToastMessage] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const { setUser, storeToken } = useStateContext();
+    const {setUser, storeToken} = useStateContext();
     const navigate = useNavigate();
 
-    const handleFirstNameChange = (event) => {
-        setFirstName(event.target.value);
-        if(!firstName || firstName.length < 2){
-            setFirstNameError("Please, enter your first name");
-        } else {
-            setFirstNameError("");
+
+    const handleFieldChange = useCallback((field, value) => {
+        setForm(prevForm => ({...prevForm, [field]: value}));
+        if (errors[field]) {
+            setErrors(prevErrors => ({...prevErrors, [field]: null}));
         }
+    }, [errors]);
+
+
+    const validateForm = () => {
+        const {firstName, lastName, email, password, passwordConf} = form;
+        const newErrors = {};
+
+        if (firstName.length < 2) {
+            newErrors.firstName = "Please, enter your first name";
+        }
+        if (lastName.length < 2) {
+            newErrors.lastName = "Please, enter your family name";
+        }
+        if (!email) {
+            newErrors.email = "Please, enter your email address";
+        }
+        if (!email.match(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+            newErrors.email = "Please, enter a valid email address";
+        }
+        if (!password) {
+            newErrors.password = "Please, enter your password";
+        }
+        if (password.length > 0 && password.length < 6) {
+            newErrors.password = "Password should be at least 6 characters long";
+        }
+        if (!password.match(/.*[0-9].*/)) {
+            newErrors.password = "Password should contain a number";
+        }
+        if (passwordConf && password !== passwordConf) {
+            newErrors.password = "Passwords do not match";
+        }
+        if (!passwordConf) {
+            newErrors.passwordConf = "Please, enter your password again";
+        }
+        if (password && passwordConf !== password) {
+            newErrors.passwordConf = "Passwords do not match";
+        }
+        return newErrors;
     }
 
-    const handleLastNameChange = (event) => {
-        setLastName(event.target.value);
-        if(!lastName || lastName.length < 2){
-            setLastNameError("Please, enter your family name");
-        } else {
-            setLastNameError("");
-        }
-    }
 
-    const handleEmailChange = (event) => {
-        setEmail(event.target.value);
-        if(email && email.length < 7){
-            setEmailError("Please enter a valid email address");
-        } else {
-            setEmailError("");
-        }
-    }
-    const handlePasswordChange = (event) => {
-        const currentPassword = event.target.value;
-        setPassword(currentPassword);
-
-        console.log("PASS", currentPassword);
-        if(password && password.length < 6){
-            setPasswordError("Password should be at least 6 characters long");
-        } else if(!password.match(/.*[0-9].*/)){
-            setPasswordError("Password should contain a number");
-        } else {
-            setPasswordError("");
-        }
-        if(passwordConf && passwordConf !== currentPassword){
-            setPasswordError("Password and Password confirm should match");
-        }
-    }
-
-    const handlePasswordConfirmChange = (event) => {
-        const currentPasswordConf = event.target.value;
-        setPasswordConf(currentPasswordConf);
-
-        console.log("curr-PASS", currentPasswordConf);
-        console.log("password-", password);
-        if(currentPasswordConf !== password){
-            setPasswordConfError("Password and Password confirm should match");
-        } else {
-            setPasswordConfError("");
-        }
-    }
-
-    const submitRegistration = async (event) => {
+    const submitRegistration = useCallback((event) => {
         event.preventDefault();
 
+        const formErrors = validateForm();
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            return;
+        }
+
+        const {firstName, lastName, email, password, passwordConf, ...rest} = form;
         const newUser = {
+            ...rest,
             name: `${firstName} ${lastName}`,
-            email: email,
-            password: password,
+            email,
+            password,
             password_confirmation: passwordConf
         };
-        console.log(newUser);
 
-        try {
-            const { data } = await axiosClient.post('/authentication/register', newUser);
-            console.log(data);
-            setUser(data.user);
-            storeToken(data.token);
-            navigate('/');
-            
-        } catch (error) {
-            console.error("error with registration", error);
-        }
-    };
+        setIsLoading(true);
+        axiosClient.post('/authentication/register', newUser)
+            .then((response) => {
+                console.log(response.data);
+                const {user, token} = response.data;
+                setUser(user);
+                storeToken(token);
+                navigate('/');
+            })
+            .catch(error => {
+                if (error.response) {
+                    const {message} = error.response.data;
+                    if (message === "The email has already been taken.") {
+                        setRegistrationSuccess(false);
+                        setToastMessage("This email address is already taken. Please, choose another one.");
+                    }
+                } else {
+                    setRegistrationSuccess(false);
+                    setToastMessage("An unexpected error occurred. Please, try again");
+                }
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [form, navigate, setUser, storeToken]);
 
 
     return (
         <FormContainer>
             <fieldset>
-            <legend className="text-sm-center fs-5 fst-italic">New on the page? Please, sign up!</legend>
-            <Form className="mt-5" onSubmit={submitRegistration} noValidate>
-                <Row>
-                    <Form.Group as={Col} controlId="firstName">
-                        <Form.Label>Name</Form.Label>
+                <legend className="text-sm-center fs-5 fst-italic">New on the page? Please, sign up!</legend>
+
+                <Form className="mt-5" onSubmit={submitRegistration} noValidate>
+                    <Row>
+                        <Form.Group as={Col} controlId="firstName">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control
+                                className='mb-2'
+                                type="text"
+                                placeholder="First name"
+                                value={form.firstName}
+                                onChange={e => handleFieldChange('firstName', e.target.value)}
+                                isInvalid={!!errors.firstName}
+                                required
+                            />
+                            <Form.Control.Feedback className="fs-6 fst-italic" type="invalid">
+                                {errors.firstName}
+                            </Form.Control.Feedback>
+                        </Form.Group>
+
+                        <Form.Group as={Col} controlId="lastName">
+                            <Form.Label> </Form.Label>
+                            <Form.Control
+                                className='mb-2'
+                                type="text"
+                                placeholder="Last name"
+                                value={form.lastName}
+                                onChange={e => handleFieldChange('lastName', e.target.value)}
+                                isInvalid={!!errors.lastName}
+                                required
+                            />
+                            <Form.Control.Feedback className="fs-6 fst-italic" type="invalid">
+                                {errors.lastName}
+                            </Form.Control.Feedback>
+                        </Form.Group>
+                    </Row>
+
+
+                    <Form.Group controlId="email">
+                        <Form.Label>Email address</Form.Label>
                         <Form.Control
-                            className={`mb-2 ${firstNameError ? "border-danger" : ""}`}
-                            type="text"
-                            placeholder="First name"
+                            className='mb-2'
+                            type="email"
+                            value={form.email}
+                            onChange={e => handleFieldChange('email', e.target.value)}
+                            isInvalid={!!errors.email}
                             required
-                            title={firstNameError}
-                            onChange={handleFirstNameChange}
                         />
-                        {firstNameError &&
-                        <p className="text-danger fs-6 fst-italic">{firstNameError}</p>
-                        }
+                        <Form.Control.Feedback className="fs-6 fst-italic" type="invalid">
+                            {errors.email}
+                        </Form.Control.Feedback>
                     </Form.Group>
-                    <Form.Group as={Col} controlId="lastName">
-                        <Form.Label>Name</Form.Label>
+
+                    <Form.Group controlId="password">
+                        <Form.Label>Password</Form.Label>
                         <Form.Control
-                            className={`mb-2 ${lastNameError ? "border-danger" : ""}`}
-                            type="text"
-                            placeholder="Last name"
+                            className='mb-2'
+                            type="password"
+                            value={form.password}
+                            onChange={e => handleFieldChange('password', e.target.value)}
+                            isInvalid={!!errors.password}
                             required
-                            title={lastNameError}
-                            onChange={handleLastNameChange}
                         />
-                        <p className="text-danger fs-6 fst-italic">{lastNameError}</p>
+                        <Form.Control.Feedback className="fs-6 fst-italic" type="invalid">
+                            {errors.password}
+                        </Form.Control.Feedback>
                     </Form.Group>
-                </Row>
 
+                    <Form.Group controlId="confirmPassword">
+                        <Form.Label>Confirm password</Form.Label>
+                        <Form.Control
+                            className='mb-2'
+                            type="password"
+                            value={form.passwordConf}
+                            onChange={e => handleFieldChange('passwordConf', e.target.value)}
+                            isInvalid={!!errors.passwordConf}
+                            required
+                        />
+                        <Form.Control.Feedback className="fs-6 fst-italic" type="invalid">
+                            {errors.passwordConf}
+                        </Form.Control.Feedback>
+                    </Form.Group>
 
-                <Form.Group controlId="email">
-                <Form.Label>Email address</Form.Label>
-                    <Form.Control
-                        className={`mb-2 ${emailError ? "border-danger" : ""}`}
-                        type="email"
-                        required
-                        title={emailError}
-                        onChange={handleEmailChange}
-                        value={email}
-                    />
-                    <p className="text-danger fs-6 fst-italic">{emailError}</p>
-                </Form.Group>
-
-                <Form.Group controlId="password">
-                <Form.Label>Password</Form.Label>
-                    <Form.Control
-                        className={`mb-2 ${passwordError ? "border-danger" : ""}`}
-                        type="password"
-                        required
-                        minLength="6"
-                        pattern="/.*[0-9].*/"
-                        title={passwordError}
-                        onChange={handlePasswordChange}
-                        value={password}
-                    />
-                    <p className="text-danger fs-6 fst-italic">{passwordError}</p>
-                </Form.Group>
-
-                <Form.Group controlId="confirmPassword">
-                    <Form.Label>Confirm password</Form.Label>
-                    <Form.Control
-                        className={`mb-2 ${passwordConfError ? "border-danger" : ""}`}
-                        type="password"
-                        required
-                        title={passwordConfError}
-                        onChange={handlePasswordConfirmChange}
-                        value={passwordConf}
-                    />
-                    <p className="text-danger fs-6 fst-italic">{passwordConfError}</p>
-                </Form.Group>
-                <Button variant="secondary" type="submit">Sign up</Button>
-            </Form>
+                    {!registrationSuccess &&
+                        <ErrorToastMessage toastHeader={"Registration failed"} toastMessage={toastMessage}/>
+                    }
+                    <Button variant="secondary" type="submit">
+                        {isLoading ? 'Signing up...' : 'Sign up'}
+                    </Button>
+                </Form>
             </fieldset>
         </FormContainer>
     )
