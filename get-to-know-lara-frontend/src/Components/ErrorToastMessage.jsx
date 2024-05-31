@@ -1,5 +1,4 @@
 import PropTypes from "prop-types";
-//import {useEffect} from "react";
 import {Toast} from "react-bootstrap";
 import {useState} from "react";
 
