@@ -1,8 +1,9 @@
-import Inbox from "../Pages/UserPages/Inbox.jsx";
-import Compose from "../Pages/UserPages/Compose.jsx";
-import Drafts from "../Pages/UserPages/Drafts.jsx";
-import Sent from "../Pages/UserPages/Sent.jsx";
-import Bin from "../Pages/UserPages/Bin.jsx";
+import Inbox from "./Inbox.jsx";
+import Compose from "./Compose.jsx";
+import Drafts from "./Drafts.jsx";
+import Sent from "./Sent.jsx";
+import Bin from "./Bin.jsx";
+
 
 const Dashboard = () => {
     return (
