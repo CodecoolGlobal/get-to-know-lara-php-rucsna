@@ -44,5 +44,37 @@ describe('Register component', () => {
         expect(passConfInput.value).toBe('password123');
     });
 
+    test('shows validation messages for empty fields', () => {
+        fireEvent.submit(screen.getByRole('button', {name: 'Sign up'}));
 
+        expect(screen.getByText('Please, enter your first name', {exact: false})).toBeInTheDocument();
+        expect(screen.getByText('Please, enter your family name', {exact: false})).toBeInTheDocument();
+        expect(screen.getByText('Please, enter a valid email address', {exact: false})).toBeInTheDocument();
+        expect(screen.getByText('Please, enter your password', {exact: false})).toBeInTheDocument();
+        expect(screen.getByText('Please, enter your password again', {exact: false})).toBeInTheDocument();
+    });
+
+    test('shows validation message for short password', () => {
+        const passwordInput = screen.getByLabelText('Password', {exact: true});
+        fireEvent.change(passwordInput, {target: {value: '123'}});
+        fireEvent.submit(screen.getByRole('button', {name: 'Sign up'}));
+        expect(screen.getByText('Password should be at least 6 characters long', {exact: false})).toBeInTheDocument();
+    });
+
+    test('shows validation message for password without number', () => {
+        const passwordInput = screen.getByLabelText('Password', {exact: true});
+        fireEvent.change(passwordInput, {target: {value: 'password'}});
+        fireEvent.submit(screen.getByRole('button', {name: 'Sign up'}));
+        expect(screen.getByText('Password should contain a number', {exact: false})).toBeInTheDocument();
+    });
+
+    test('shows validation message for not matching passwords', () => {
+        const passwordInput = screen.getByLabelText('Password', {exact: true});
+        const passConfInput = screen.getByLabelText('Confirm password', {exact: false});
+
+        fireEvent.change(passwordInput, {target: {value: 'password123'}});
+        fireEvent.change(passConfInput, {target: {value: '123password'}});
+        fireEvent.submit(screen.getByRole('button', {name: 'Sign up'}));
+        expect((screen.getAllByText('Passwords do not match', {exact: false})).length).toBeGreaterThan(0);
+    });
 })
