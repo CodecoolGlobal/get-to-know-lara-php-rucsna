@@ -94,7 +94,7 @@ const Registration = () => {
                 const {user, token} = response.data;
                 setUser(user);
                 storeToken(token);
-                navigate('/');
+                navigate('/dashboard');
             })
             .catch(error => {
                 if (error.response) {

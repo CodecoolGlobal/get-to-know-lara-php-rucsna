@@ -19,8 +19,8 @@ function GuestLayout() {
                     <Navbar.Toggle aria-controls="basic-navbar-nav"/>
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="ms-auto">
-                            <Nav.Link href="/login">Login</Nav.Link>
-                            <Nav.Link href="/registration">Sign up</Nav.Link>
+                            <Nav.Link href="/guest/login">Login</Nav.Link>
+                            <Nav.Link href="/guest/registration">Sign up</Nav.Link>
                         </Nav>
                     </Navbar.Collapse>
                 </Container>

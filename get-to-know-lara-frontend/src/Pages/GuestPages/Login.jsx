@@ -56,7 +56,7 @@ const Login = () => {
             const {data} = await axiosClient.post('/authentication/login', form);
             setUser(data.user);
             storeToken(data.token);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setLoginSuccess(false);
         } finally {

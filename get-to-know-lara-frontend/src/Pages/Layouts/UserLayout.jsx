@@ -1,4 +1,4 @@
-import {Link, Outlet, useLocation, useNavigate} from "react-router-dom";
+import {Link, Outlet, useNavigate} from "react-router-dom";
 import {useStateContext} from "../../contexts/ContextProvider.jsx";
 import axiosClient from "../../axios-client.js";
 import {useEffect} from "react";
@@ -6,7 +6,6 @@ import {useEffect} from "react";
 function UserLayout() {
     const {token, user, setUser, storeToken} = useStateContext();
     const navigate = useNavigate();
-    const location = useLocation();
 
     useEffect(() => {
         const getUser = () => {
@@ -20,12 +19,11 @@ function UserLayout() {
                 })
         };
         if (!token) {
-            navigate('/login');
+            navigate('/guest');
         } else if (token && !user) {
             getUser();
-            console.log(location.pathname);
         }
-    }, [location.pathname, navigate, setUser, token, user]);
+    }, [navigate, setUser, token, user]);
 
     if (!user) {
         return <div>Loading...</div>
