@@ -2,6 +2,7 @@ import {useNavigate} from "react-router-dom";
 import PropTypes from "prop-types";
 import axiosClient from "../axios-client.js";
 import {useStateContext} from "../contexts/ContextProvider.jsx";
+import {Container, Table} from "react-bootstrap";
 
 const MailsTable = ({mails, getCurrent, isBin, isInbox, isDraft, label}) => {
     const navigate = useNavigate();
@@ -10,7 +11,6 @@ const MailsTable = ({mails, getCurrent, isBin, isInbox, isDraft, label}) => {
     MailsTable.propTypes = {
         mails: PropTypes.array.isRequired,
         getCurrent: PropTypes.func.isRequired,
-        setMails: PropTypes.func.isRequired,
         isBin: PropTypes.bool,
         isInbox: PropTypes.bool,
         isDraft: PropTypes.bool,
@@ -18,7 +18,7 @@ const MailsTable = ({mails, getCurrent, isBin, isInbox, isDraft, label}) => {
     };
 
     const handleMailDisplay = (mailId) => {
-        navigate(`/currentMail/${mailId}`);
+        navigate(`/mail/${mailId}`);
     };
 
     const markMailUnread = (mailId) => {
@@ -64,32 +64,46 @@ const MailsTable = ({mails, getCurrent, isBin, isInbox, isDraft, label}) => {
 
     const editDraft = (mailId) => {
         navigate(`/draft/${mailId}`);
-    }
+    };
 
     return (
-        <fieldset>
-            <table className="table table-success table-striped">
+        <Container className="mt-3">
+            <Table striped bordered hover>
                 <tbody>
                 {mails.map(mail => (
                     <tr key={mail.id} className={`${mail.opened_at === null ? 'fw-bold' : 'fw-normal'}`}>
-                        <th scope="row" className="fst-italic fw-medium">{label}</th>
+                        <th className="fst-italic fw-medium text-warning">{label}</th>
                         <td>{mail.name}</td>
                         <td>{mail.subject ?? '(No subject)'}</td>
+                        <td className="text-truncate" style={{maxWidth: '150px'}}>{mail.message}</td>
                         <td>{mail.time}</td>
                         {!isDraft ?
-                            <td className="btn btn-warning text-warning-emphasis" onClick={() => handleMailDisplay(mail.id)}>Open</td> : null
+                            <td className="btn btn-primary text-primary"
+                                onClick={() => handleMailDisplay(mail.id)}>
+                                <i className="bi bi-envelope-open"></i>
+                            </td> : null
                         }
                         {isInbox || isBin ?
-                            <td className="btn btn-secondary text-secondary-emphasis" onClick={() => markMailUnread(mail.id)}>Mark as unread</td> : null
+                            <td className="btn btn-secondary text-secondary"
+                                onClick={() => markMailUnread(mail.id)}>
+                                <i className="bi bi-envelope"></i>
+                            </td> : null
                         }
                         {isDraft ?
                             <>
-                                <td className="btn btn-warning text-warning-emphasis" onClick={() => editDraft(mail.id)}>Open</td>
-                                <td className="btn btn-danger text-danger-emphasis" onClick={() => deleteDraft(mail.id)}>Delete</td>
+                                <td className="btn btn-primary text-primary" onClick={() => editDraft(mail.id)}>
+                                    <i className="bi bi-envelope-open"></i>
+                                </td>
+                                <td className="btn btn-danger text-danger"
+                                    onClick={() => deleteDraft(mail.id)}>
+                                    <i className="bi bi-trash3"></i>
+                                </td>
                             </> : null
                         }
                         {!isBin && !isDraft ?
-                            <td className="btn btn-danger text-danger-emphasis" onClick={() => deleteMail(mail.id)}>Delete</td> : null
+                            <td className="btn btn-danger text-danger" onClick={() => deleteMail(mail.id)}>
+                                <i className="bi bi-trash3"></i>
+                            </td> : null
                         }
                         {isBin ?
                             <td className="btn btn-danger text-danger-emphasis" onClick={() => restoreMail(mail.id)}>Restore</td> : null
@@ -97,8 +111,8 @@ const MailsTable = ({mails, getCurrent, isBin, isInbox, isDraft, label}) => {
                     </tr>
                 ))}
                 </tbody>
-            </table>
-        </fieldset>
+            </Table>
+        </Container>
     )
 }
 export default MailsTable;
