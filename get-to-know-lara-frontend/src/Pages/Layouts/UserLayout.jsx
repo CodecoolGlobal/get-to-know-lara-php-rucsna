@@ -1,7 +1,8 @@
-import {Link, Outlet, useNavigate} from "react-router-dom";
+import {Outlet, useNavigate} from "react-router-dom";
 import {useStateContext} from "../../contexts/ContextProvider.jsx";
 import axiosClient from "../../axios-client.js";
 import {useEffect} from "react";
+import {Button, Container, Image, Nav, Navbar, NavbarBrand} from "react-bootstrap";
 
 function UserLayout() {
     const {token, user, setUser, storeToken} = useStateContext();
@@ -42,21 +43,21 @@ function UserLayout() {
     };
 
     return (
-        <div className="container">
-            <nav className="navbar navbar-expand-sm bg-dark-subtle">
-                <div className="container-fluid">
-                    <Link className="navbar-brand" to={"/"}>ZM</Link>
-                    <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
-                        <li className="nav-item">
-                            <Link className="nav-link active text-success-emphasis" to={"/dashboard"}>{user.name}</Link>
-                        </li>
-                        <li className="nav-item">
-                            <button className="nav-link active text-success-emphasis" onClick={handleLogout}>Logout
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+        <div>
+            <Navbar expand="sm" className="bg-primary" data-bs-theme="dark">
+                <Container className="container-fluid">
+                    <NavbarBrand href="/">
+                        <Image src="../../../assets/ZM_logo.png" style={{maxHeight: '60px'}}/>
+                    </NavbarBrand>
+                    <Navbar.Toggle aria-controls="basic-navbar-nav"/>
+                    <Navbar.Collapse id="basic-navbar-nav">
+                        <Nav className="ms-auto">
+                            <Nav.Link href="/dashboard" className="active text-light">{user.name}</Nav.Link>
+                            <Button onClick={handleLogout} className="active text-light">Logout</Button>
+                        </Nav>
+                    </Navbar.Collapse>
+                </Container>
+            </Navbar>
             <Outlet/>
         </div>
     )
