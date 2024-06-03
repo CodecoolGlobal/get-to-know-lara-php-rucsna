@@ -11,9 +11,9 @@ function GuestLayout() {
 
     return (
         <div>
-            <Navbar expand="sm" className="bg-dark-subtle">
+            <Navbar expand="sm" className="bg-primary" data-bs-theme="dark">
                 <Container className="container-fluid">
-                    <NavbarBrand href="/">
+                    <NavbarBrand href="/guest">
                         <Image src="../../../assets/ZM_logo.png" style={{maxHeight: '60px'}}/>
                     </NavbarBrand>
                     <Navbar.Toggle aria-controls="basic-navbar-nav"/>

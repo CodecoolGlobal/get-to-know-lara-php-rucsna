@@ -104,7 +104,7 @@ const Login = () => {
                     {!loginSuccess &&
                         <ErrorToastMessage toastHeader={"Login failed"} toastMessage={"Username or password is invalid"}/>
                     }
-                    <Button className="mt-4" variant="secondary" type="submit" disabled={isLoading}>
+                    <Button className="mt-4" variant="info" type="submit" disabled={isLoading}>
                         {isLoading ? 'Logging in...' : 'Login'}
                     </Button>
                 </Form>
