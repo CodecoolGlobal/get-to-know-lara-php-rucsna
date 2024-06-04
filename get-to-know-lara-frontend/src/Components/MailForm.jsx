@@ -94,17 +94,23 @@ const MailForm = ({mail, onSend, onSave}) => {
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 required/>
-                        </div>
-                        <div className="col-md-12">
-                            <button type="submit" name="sendButton" className="btn btn-secondary">Send</button>
-                        </div>
-                        <div className="col-md-12">
-                            <button type="submit" name="saveButton" className="btn btn-secondary">Save</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+                            </FloatingLabel>
+                        </InputGroup>
+
+                        <Form.Group controlId="file-input" className="mb-3">
+                            <Form.Label className="text-light">Attachment</Form.Label>
+                            <Form.Control type="file" multiple />
+                        </Form.Group>
+
+                        <InputGroup>
+                            <Button type="submit" name="sendButton" className="btn-success btn-outline-light">Send</Button>
+                            <Button type="submit" name="saveButton" className="btn-success btn-outline-light">Save</Button>
+                        </InputGroup>
+
+                    </Form>
+                </Card.Body>
+            </Card>
+        </FormContainer>
     )
 };
 
