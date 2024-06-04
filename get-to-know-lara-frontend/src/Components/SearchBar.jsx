@@ -1,43 +1,41 @@
 import {useState} from "react";
 import axiosClient from "../axios-client.js";
 import PropTypes from "prop-types";
+import {Form, InputGroup} from "react-bootstrap";
 
 const SearchBar = ({setUser, email}) => {
     const [input, setInput] = useState(email ?? "");
     const [results, setResults] = useState([]);
 
-    SearchBar.propTypes = {
-        setUser: PropTypes.func,
-        email: PropTypes.string
-    }
     const fetchAddress = (input) => {
-            axiosClient.get(`/user/addresses/${input}`)
-                .then(response => {
-                    setResults(response.data);
-                    //setUser(response.data.id);
-                    console.log(response.data);
-                })
-                .catch(error => console.error("error with getting email addresses", error));
+        axiosClient.get(`/user/addresses/${input}`)
+            .then(response => {
+                setResults(response.data);
+            })
+            .catch(error => console.error("error with getting email addresses", error));
     }
 
     const handleChange = (event) => {
         setInput(event.target.value);
-        if(input.length >= 2){
+        if (input.length >= 2) {
             fetchAddress(input);
         }
         const selectedUser = results.find(result => result.name === event.target.value);
-        console.log(selectedUser);
-        if(selectedUser){
+
+        if (selectedUser) {
             setUser(selectedUser.id);
-        } else{
+        } else {
             setUser(null);
         }
     }
 
-    return(
-        <div>
-            <input
-                placeholder={email}
+    return (
+        <InputGroup>
+            <InputGroup.Text className="text-light" id="recipient-address">To:</InputGroup.Text>
+            <Form.Control
+                placeholder={input === "" ? "example@email.com" : email}
+                aria-label="recipient-address"
+                aria-describedby="recipient-address"
                 value={input}
                 onChange={handleChange}
                 list="result-list"
@@ -49,8 +47,13 @@ const SearchBar = ({setUser, email}) => {
                     })
                 }
             </datalist>
-        </div>
+        </InputGroup>
     )
-}
+};
+
+SearchBar.propTypes = {
+    setUser: PropTypes.func,
+    email: PropTypes.string
+};
 
 export default SearchBar;
