@@ -23,11 +23,11 @@ const SearchBar = ({setUser, email}) => {
         const selectedUser = results.find(result => result.name === event.target.value);
 
         if (selectedUser) {
-            setUser(selectedUser.id);
+            setUser('user_id_to', selectedUser.id);
         } else {
             setUser(null);
         }
-    }
+    };
 
     return (
         <InputGroup>
