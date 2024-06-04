@@ -67,46 +67,48 @@ const MailsTable = ({mails, getCurrent, isBin, isInbox, isDraft, label}) => {
     };
 
     return (
-        <Container className="mt-3">
-            <Table striped bordered hover>
+        <Container className="mt-3" fluid="lg">
+            <Table striped bordered responsive="lg">
                 <tbody>
                 {mails.map(mail => (
-                    <tr key={mail.id} className={`${mail.opened_at === null ? 'fw-bold' : 'fw-normal'}`}>
-                        <th className="fst-italic fw-medium text-warning">{label}</th>
-                        <td>{mail.name}</td>
-                        <td>{mail.subject ?? '(No subject)'}</td>
-                        <td className="text-truncate" style={{maxWidth: '150px'}}>{mail.message}</td>
-                        <td>{mail.time}</td>
+                    <tr key={mail.id} className={`${mail.opened_at === null ? 'fw-bolder' : 'fw-normal'}`}>
+                        <th className="fw-semibold fw-medium text-warning">{label}</th>
+                        <td className="text-secondary">{mail.name}</td>
+                        <td className="text-secondary">{mail.subject ?? '(No subject)'}</td>
+                        <td className="text-truncate text-secondary" style={{maxWidth: '150px'}}>{mail.message}</td>
+                        <td className="text-secondary">{mail.time}</td>
                         {!isDraft ?
-                            <td className="btn btn-primary text-primary"
+                            <td className="text-primary"
                                 onClick={() => handleMailDisplay(mail.id)}>
                                 <i className="bi bi-envelope-open"></i>
                             </td> : null
                         }
                         {isInbox || isBin ?
-                            <td className="btn btn-secondary text-secondary"
+                            <td className="text-secondary"
                                 onClick={() => markMailUnread(mail.id)}>
                                 <i className="bi bi-envelope"></i>
                             </td> : null
                         }
                         {isDraft ?
                             <>
-                                <td className="btn btn-primary text-primary" onClick={() => editDraft(mail.id)}>
+                                <td className="text-primary" onClick={() => editDraft(mail.id)}>
                                     <i className="bi bi-envelope-open"></i>
                                 </td>
-                                <td className="btn btn-danger text-danger"
+                                <td className="text-danger"
                                     onClick={() => deleteDraft(mail.id)}>
                                     <i className="bi bi-trash3"></i>
                                 </td>
                             </> : null
                         }
                         {!isBin && !isDraft ?
-                            <td className="btn btn-danger text-danger" onClick={() => deleteMail(mail.id)}>
+                            <td className="text-danger" onClick={() => deleteMail(mail.id)}>
                                 <i className="bi bi-trash3"></i>
                             </td> : null
                         }
                         {isBin ?
-                            <td className="btn btn-danger text-danger-emphasis" onClick={() => restoreMail(mail.id)}>Restore</td> : null
+                            <td className="text-danger" onClick={() => restoreMail(mail.id)}>
+                                <i className="bi bi-envelope-arrow-up"></i>
+                            </td> : null
                         }
                     </tr>
                 ))}
