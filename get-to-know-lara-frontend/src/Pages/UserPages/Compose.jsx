@@ -9,7 +9,7 @@ const Compose = () => {
         axiosClient.post('/mail/send', request)
             .then(() => {
             console.log("message successfully sent");
-            navigate('/inbox');
+            navigate('/dashboard');
             })
             .catch (error => console.error("error with sending message", error));
     };
@@ -18,7 +18,7 @@ const Compose = () => {
         axiosClient.post('/mail/draft', request)
             .then(() => {
                 console.log("draft successfully saved");
-                navigate('/drafts');
+                navigate('/dashboard');
             })
             .catch(error => console.error("error with saving draft", error));
     }
