@@ -23,7 +23,7 @@ const Bin = () => {
     return(
         <div>
             {mails &&
-               <MailsTable mails={mails} setMails={setMails} getCurrent={getDeletedMails} isBin={true} label={"Deleted "}/>
+               <MailsTable mails={mails} getCurrent={getDeletedMails} isBin={true} label={"Deleted "}/>
             }
         </div>
     );

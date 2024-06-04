@@ -15,7 +15,6 @@ const Inbox = () => {
         axiosClient.get(`/mail/mailsByUser/inbox/${user.id}`)
             .then(response => {
                 const data = response.data;
-                console.log('MAILS', data.mails);
                 setMails(data.mails);
 
             })
@@ -27,7 +26,7 @@ const Inbox = () => {
     return (
         <div>
             {mails &&
-            <MailsTable mails={mails} getCurrent={getInbox} setMails={setMails} isInbox={true} label={"From: "}/>
+            <MailsTable mails={mails} getCurrent={getInbox} isInbox={true} label={"From: "}/>
             }
         </div>
     )
