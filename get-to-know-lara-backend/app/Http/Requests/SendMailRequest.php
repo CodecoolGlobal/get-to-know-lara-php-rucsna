@@ -28,7 +28,8 @@ class SendMailRequest extends FormRequest
             'subject' => 'max:100',
             'is_draft' => 'required|boolean',
             'reply_to' => 'sometimes|nullable|exists:mails,id',
-            'mail_id' => 'sometimes|nullable|exists:mails,id'
+            'mail_id' => 'sometimes|nullable|exists:mails,id',
+            'attachment' => 'file|max:10240'
         ];
     }
 
