@@ -1,7 +1,9 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState} from "react";import {useStateContext} from "../contexts/ContextProvider.jsx";
 import PropTypes from "prop-types";
+
 import SearchBar from "./SearchBar.jsx";
-import {useStateContext} from "../contexts/ContextProvider.jsx";
+import FormContainer from "./FormContainer.jsx";
+import {Button, Card, FloatingLabel, Form, FormControl, InputGroup} from "react-bootstrap";
 
 const MailForm = ({mail, onSend, onSave}) => {
     const [userIdTo, setUserIdTo] = useState("");
@@ -9,12 +11,6 @@ const MailForm = ({mail, onSend, onSave}) => {
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState( "");
     const {user} = useStateContext();
-
-    MailForm.propTypes = {
-        mail: PropTypes.object,
-        onSend: PropTypes.func,
-        onSave: PropTypes.func
-    };
 
     useEffect(() => {
         if(mail){
@@ -71,27 +67,30 @@ const MailForm = ({mail, onSend, onSave}) => {
     }
 
     return (
-        <div className="container">
-            <div className="card">
-                <div className="card-body">
-                    <form className="row g-3" onSubmit={handleSubmit}>
-                        <h6 className="card-title">New message</h6>
-                        <div className="input-group col-md-6">
-                            <span className="input-group-text" id="basic-addon1">To:</span>
-                            <SearchBar setUser={setUserIdTo} email={email}/>
-                        </div>
-                        <div className="input-group col-md-6">
-                            <span className="input-group-text" id="basic-addon1">Subject:</span>
-                            <input
+        <FormContainer>
+            <Card>
+                <Card.Header className="text-light">New message</Card.Header>
+                <Card.Body>
+                    <Form className="row g-3" onSubmit={handleSubmit}>
+                        <SearchBar setUser={setUserIdTo} email={email}/>
+
+                        <InputGroup className="col-md-6">
+                            <InputGroup.Text className="text-light" id="subject">Subject:</InputGroup.Text>
+                            <FormControl
                                 type="text"
-                                className="form-control"
+                                aria-label="subject"
+                                aria-describedby="subject"
+                                placeholder="example subject"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}/>
-                        </div>
-                        <div className="col-md-12 has-validation">
-                            <textarea
-                                className="form-control"
-                                rows="6"
+                        </InputGroup>
+
+                        <InputGroup className="col-md-12 has-validation">
+                            <FloatingLabel className="text-light" controlId="message" label={"Message"}>
+                            <Form.Control
+                                as="textarea"
+                                style={{height: '200px'}}
+                                placeholder="Type your message here..."
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 required/>
@@ -107,6 +106,12 @@ const MailForm = ({mail, onSend, onSave}) => {
             </div>
         </div>
     )
-}
+};
+
+MailForm.propTypes = {
+    mail: PropTypes.object,
+    onSend: PropTypes.func,
+    onSave: PropTypes.func
+};
 
 export default MailForm;
