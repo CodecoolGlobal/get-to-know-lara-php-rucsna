@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Requests\DraftRequest;
 use App\Http\Requests\SendMailRequest;
+use App\Models\Attachment;
 use App\Models\Mail;
 use App\Models\Transaction;
 use App\Models\User;
@@ -122,7 +123,18 @@ class MailService
                 'mail_id' => $newMail->id,
                 'received_at' => now()
             ]);
-            //$this->createTransactions($allowedFields['user_id_from'], $allowedFields['user_id_to'], $newMail->id);
+
+            if($request->hasFile('attachment')){
+                foreach ($request->file('attachment') as $file){
+                    $fileContent = base64_decode(file_get_contents($file->getRealPath()));
+                    Attachment::query()->create([
+                        'mail_id' => $newMail->id,
+                        'filename' => $file->getClientOriginalName(),
+                        'file' => $fileContent
+                    ]);
+                }
+            }
+            
             return $newMail;
         });
     }
@@ -282,7 +294,8 @@ class MailService
      */
     public function deleteDraft($mailId, $userId): void
     {
-        $draftToDelete = Mail::query()->where('user_id_from', $userId)->where('is_draft', true)->find($mailId);
+        $user = User::query()->find($userId);
+        $draftToDelete = $user->drafts()->where('mail_id', $mailId)->first();
         if (!$draftToDelete) {
             throw new Exception('Not a draft');
         }
