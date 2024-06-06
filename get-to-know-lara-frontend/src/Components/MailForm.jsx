@@ -1,4 +1,5 @@
-import {useCallback, useEffect, useState} from "react";import {useStateContext} from "../contexts/ContextProvider.jsx";
+import {useCallback, useEffect, useState} from "react";
+import {useStateContext} from "../contexts/ContextProvider.jsx";
 import PropTypes from "prop-types";
 
 import SearchBar from "./SearchBar.jsx";
@@ -12,7 +13,7 @@ const MailForm = ({mail, onSend, onSave}) => {
         email: "",
         subject: "",
         message: "",
-        attachment: null
+        attachment: []
     });
     const [errors, setErrors] = useState({});
 
@@ -31,21 +32,39 @@ const MailForm = ({mail, onSend, onSave}) => {
         }
     },[errors]);
 
-
+    console.log('ATTACHMENT', form.attachment);
     const handleSave = () => {
+        const formData = createFormData(true);
         if(mail){
-            return onSave({...mail, ...form, is_draft: false});
+            return onSave(formData, mail.id);
         } else{
-            return onSave({user_id_from: user.id, ...form, is_draft: false});
+            return onSave(formData);
         }
     };
 
     const handleSend = () => {
+        const formData = createFormData(false);
         if(mail){
-            return onSend({...mail, ...form, is_draft: false});
+            return onSend(formData, mail.id);
         } else {
-            return onSend({user_id_from: user.id, ...form, is_draft: false});
+            return onSend(formData);
         }
+    };
+
+    const createFormData = (isDraft) => {
+        const formData = new FormData();
+        formData.append('user_id_from', user.id);
+        formData.append('user_id_to', form.user_id_to);
+        formData.append('email', form.email);
+        formData.append('subject', form.subject);
+        formData.append('message', form.message);
+        if (form.attachment.length > 0) {
+            for(let i = 0; i < form.attachment.length; i++){
+                formData.append('attachment[]', form.attachment[i]);
+            }
+        }
+        formData.append('is_draft', isDraft ? '1' : '0');
+        return formData;
     };
 
     const handleSubmit = (event) => {
