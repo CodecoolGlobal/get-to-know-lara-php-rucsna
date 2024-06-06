@@ -9,7 +9,7 @@ const Compose = () => {
         axiosClient.post('/mail/send', request)
             .then(() => {
             console.log("message successfully sent");
-            navigate('/dashboard');
+            navigate('/');
             })
             .catch (error => console.error("error with sending message", error));
     };
