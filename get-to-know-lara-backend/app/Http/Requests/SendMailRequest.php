@@ -29,7 +29,7 @@ class SendMailRequest extends FormRequest
             'is_draft' => 'required|boolean',
             'reply_to' => 'sometimes|nullable|exists:mails,id',
             'mail_id' => 'sometimes|nullable|exists:mails,id',
-            'attachment' => 'file|max:10240'
+            'attachment.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp3,wav,pdf,doc,docx,xml,msword,vnd.openxmlformats-officedocument.wordprocessingml.document|max:10240'
         ];
     }
 
@@ -42,7 +42,6 @@ class SendMailRequest extends FormRequest
             'message',
             'is_draft',
             'reply_to',
-            'attachment'
         ]);
     }
 }
