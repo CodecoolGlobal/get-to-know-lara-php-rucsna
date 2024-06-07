@@ -25,12 +25,13 @@ class DraftRequest extends FormRequest
             'user_id_from' => 'required|exists:users,id',
             'user_id_to' => 'sometimes|nullable|exists:users,id',
             'subject' => 'max:100',
-            'reply_to' => 'sometimes|nullable|exists:mails,id'
+            'reply_to' => 'sometimes|nullable|exists:mails,id',
+            'attachment.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp3,wav,pdf,doc,docx,xml,msword,vnd.openxmlformats-officedocument.wordprocessingml.document|max:10240'
         ];
     }
 
     public function allowed(): array
     {
-        return $this->only(['user_id_from', 'user_id_to', 'subject', 'message', 'reply_to', 'attachment']);
+        return $this->only(['user_id_from', 'user_id_to', 'subject', 'message', 'reply_to']);
     }
 }
