@@ -1,112 +1,151 @@
-import {useEffect, useState} from "react";
-import PropTypes from "prop-types";
-import SearchBar from "./SearchBar.jsx";
+import {useCallback, useEffect, useState} from "react";
 import {useStateContext} from "../contexts/ContextProvider.jsx";
+import PropTypes from "prop-types";
+
+import SearchBar from "./SearchBar.jsx";
+import FormContainer from "./FormContainer.jsx";
+import {Button, Card, FloatingLabel, Form, FormControl, InputGroup} from "react-bootstrap";
+import AttachmentUpload from "./AttachmentUpload.jsx";
 
 const MailForm = ({mail, onSend, onSave}) => {
-    const [userIdTo, setUserIdTo] = useState("");
-    const [email, setEmail] = useState("");
-    const [subject, setSubject] = useState("");
-    const [message, setMessage] = useState( "");
-    const {user} = useStateContext();
+    const [draft, setDraft] = useState(false);
+    const [form, setForm] = useState({
+        user_id_to: "",
+        email: "",
+        subject: "",
+        message: "",
+        attachment: []
+    });
+    const [errors, setErrors] = useState({});
 
-    MailForm.propTypes = {
-        mail: PropTypes.object,
-        onSend: PropTypes.func,
-        onSave: PropTypes.func
-    };
+    const {user} = useStateContext();
 
     useEffect(() => {
         if(mail){
-            setUserIdTo(mail.user_id_to);
-            setEmail(mail.email);
-            setSubject(mail.subject);
-            setMessage(mail.message);
+            setForm({...mail});
+            setDraft(true);
         }
     }, [mail]);
+
+    const handleFieldChange = useCallback((field, value) => {
+        setForm(prevForm => ({...prevForm, [field]: value}));
+        if(errors[field]){
+            setErrors(prevErrors => ({...prevErrors, [field]: null}));
+        }
+    },[errors]);
+
+    const handleSave = () => {
+        const formData = createFormData(true);
+        if(mail){
+            return onSave(formData, mail.id);
+        } else{
+            return onSave(formData);
+        }
+    };
+
+    const handleSend = () => {
+        const formData = createFormData(false);
+        if(mail){
+            return onSend(formData, mail.id);
+        } else {
+            return onSend(formData);
+        }
+    };
+
+    const createFormData = (isDraft) => {
+        const formData = new FormData();
+        formData.append('user_id_from', user.id);
+        formData.append('user_id_to', form.user_id_to);
+        formData.append('email', form.email);
+        formData.append('subject', form.subject);
+        formData.append('message', form.message);
+        if (form.attachment.length > 0) {
+            for(let i = 0; i < form.attachment.length; i++){
+                formData.append('attachment[]', form.attachment[i]);
+            }
+        }
+        formData.append('is_draft', isDraft ? '1' : '0');
+        return formData;
+    };
 
     const handleSubmit = (event) => {
         event.preventDefault();
         const {name} = event.nativeEvent.submitter;
 
         if(name === "saveButton"){
-            if(mail){
-                return onSave({
-                    ...mail,
-                    //user_id_from: user.id,
-                    user_id_to: userIdTo,
-                    subject,
-                    message,
-                    is_draft: false
-                });
-            }
-            return onSave({
-                user_id_from: user.id,
-                user_id_to: userIdTo,
-                subject: subject,
-                message: message,
-                is_draft: false
-            });
+            handleSave();
         }
 
         if(name === "sendButton"){
-            if(mail){
-                return onSend({
-                    ...mail,
-                    //user_id_from: user.id,
-                    user_id_to: userIdTo,
-                    subject,
-                    message,
-                    is_draft: false
-                });
-            }
-            return onSend({
-                user_id_from: user.id,
-                user_id_to: userIdTo,
-                subject: subject,
-                message: message,
-                is_draft: false
-            });
+            handleSend();
         }
-    }
+    };
 
     return (
-        <div className="container">
-            <div className="card">
-                <div className="card-body">
-                    <form className="row g-3" onSubmit={handleSubmit}>
-                        <h6 className="card-title">New message</h6>
-                        <div className="input-group col-md-6">
-                            <span className="input-group-text" id="basic-addon1">To:</span>
-                            <SearchBar setUser={setUserIdTo} email={email}/>
-                        </div>
-                        <div className="input-group col-md-6">
-                            <span className="input-group-text" id="basic-addon1">Subject:</span>
-                            <input
+        <FormContainer>
+            <Card>
+                <Card.Header className="text-light">New message</Card.Header>
+                <Card.Body>
+                    <Form className="row g-3" onSubmit={handleSubmit}>
+                        <SearchBar setUser={handleFieldChange} email={form.email}/>
+
+                        <InputGroup className="col-md-6">
+                            <InputGroup.Text className="text-light" id="subject">Subject:</InputGroup.Text>
+                            <FormControl
                                 type="text"
-                                className="form-control"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}/>
-                        </div>
-                        <div className="col-md-12 has-validation">
-                            <textarea
-                                className="form-control"
-                                rows="6"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
+                                aria-label="subject"
+                                aria-describedby="subject"
+                                placeholder="example subject"
+                                value={form.subject}
+                                onChange={e => handleFieldChange('subject', e.target.value)}/>
+                        </InputGroup>
+
+                        <InputGroup className="col-md-12 has-validation">
+                            <FloatingLabel className="text-light" controlId="message" label={"Message"}>
+                            <Form.Control
+                                as="textarea"
+                                style={{height: '200px'}}
+                                placeholder="Type your message here..."
+                                value={form.message}
+                                onChange={e => handleFieldChange('message', e.target.value)}
                                 required/>
-                        </div>
-                        <div className="col-md-12">
-                            <button type="submit" name="sendButton" className="btn btn-secondary">Send</button>
-                        </div>
-                        <div className="col-md-12">
-                            <button type="submit" name="saveButton" className="btn btn-secondary">Save</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+                            </FloatingLabel>
+                        </InputGroup>
+
+                        <AttachmentUpload handleFieldChange={handleFieldChange}/>
+
+                        {draft && (form.attachment.length > 0) ?
+                            form.attachment.map((filename, index) => (
+                                <InputGroup key={index} className="col-md-6">
+                                    <Form.Control
+                                        disabled
+                                        aria-label="attachment"
+                                        aria-describedby="basic-addon2"
+                                        value={filename ?? ''}
+                                    />
+                                    <Button variant="outline-warning" id="button-addon2">
+                                        X
+                                    </Button>
+                                </InputGroup>
+                            )) : null
+                        }
+
+                        <InputGroup>
+                            <Button type="submit" name="sendButton" className="btn-success btn-outline-light">Send</Button>
+                            <Button type="submit" name="saveButton" className="btn-success btn-outline-light">Save</Button>
+                        </InputGroup>
+
+                    </Form>
+                </Card.Body>
+            </Card>
+        </FormContainer>
     )
-}
+};
+
+MailForm.propTypes = {
+    mail: PropTypes.object,
+    onSend: PropTypes.func,
+    onSave: PropTypes.func
+};
 
 export default MailForm;

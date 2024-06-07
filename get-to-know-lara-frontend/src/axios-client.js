@@ -13,7 +13,9 @@ const axiosClient = axios.create({
 // if the token is null it is still added to header but with null value (can be checked for null and only add if token exists) 
 axiosClient.interceptors.request.use(config =>{
     const token = localStorage.getItem('ACCESS_TOKEN');
-    config.headers.Authorization = `Bearer ${token}`
+    if(token){
+        config.headers.Authorization = `Bearer ${token}`;
+    }
 
     return config;
 });
@@ -30,6 +32,7 @@ axiosClient.interceptors.response.use(response => {
         const {response} = error;
         if(response.status === 401){
         localStorage.removeItem('ACCESS_TOKEN');
+        window.location.href = '/guest';
     }    
     } catch (error) {
         console.error(error);

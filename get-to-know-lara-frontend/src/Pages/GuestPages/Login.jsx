@@ -56,7 +56,7 @@ const Login = () => {
             const {data} = await axiosClient.post('/authentication/login', form);
             setUser(data.user);
             storeToken(data.token);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setLoginSuccess(false);
         } finally {
@@ -104,7 +104,7 @@ const Login = () => {
                     {!loginSuccess &&
                         <ErrorToastMessage toastHeader={"Login failed"} toastMessage={"Username or password is invalid"}/>
                     }
-                    <Button className="mt-4" variant="secondary" type="submit" disabled={isLoading}>
+                    <Button className="mt-4" variant="info" type="submit" disabled={isLoading}>
                         {isLoading ? 'Logging in...' : 'Login'}
                     </Button>
                 </Form>

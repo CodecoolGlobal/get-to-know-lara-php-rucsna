@@ -2,6 +2,7 @@ import {useEffect, useState} from "react";
 import axiosClient from "../../axios-client.js";
 import {useParams, useNavigate} from "react-router-dom";
 import {useStateContext} from "../../contexts/ContextProvider.jsx";
+import {Button} from "react-bootstrap";
 
 const CurrentMail = () => {
     const [mail, setMail] = useState(null);
@@ -9,14 +10,11 @@ const CurrentMail = () => {
     const {user} = useStateContext();
     const {id} = useParams();
 
-    console.log("MAIL ID", id);
-
     useEffect(() => {
         const getMailById = async () => {
             axiosClient.patch(`/mail/display/mail`, {user_id: user.id, mail_id: id}
                 )
                 .then((response) => {
-                    console.log("mail marked as read successfully", response.data);
                     setMail(response.data.mail);
                 })
                 .catch(error => {
@@ -40,7 +38,9 @@ const CurrentMail = () => {
                         <p className="card-text">{mail.message}</p>
                     </div>
                     <div className="card-body">
-                        <a onClick={() => navigate(-1)} className="card-link">Back</a>
+                        <Button className="text-dark" onClick={() => navigate(-1)}>
+                            <i className="bi bi-arrow-left-square"></i>
+                        </Button>
                     </div>
                 </div>}
         </div>

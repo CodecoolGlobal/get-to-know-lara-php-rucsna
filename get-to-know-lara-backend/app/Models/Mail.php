@@ -13,13 +13,10 @@ class Mail extends Model
     use HasFactory;
     public $timestamps = false;
     protected $fillable = [
-        'user_id_from',
-        'user_id_to',
         'subject',
         'message',
-        'attachment',
         'reply_to',
-        'is_draft'
+        'is_draft',
     ];
 
     public function user_from(): HasOneThrough
@@ -39,5 +36,10 @@ class Mail extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class, 'mail_id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class);
     }
 }

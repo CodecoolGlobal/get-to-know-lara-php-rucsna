@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Requests\DraftRequest;
 use App\Http\Requests\SendMailRequest;
+use App\Models\Attachment;
 use App\Models\Mail;
 use App\Models\Transaction;
 use App\Models\User;
@@ -31,8 +32,9 @@ class MailService
                 'name' => $mail->user_to->name,
                 'email' => $mail->user_to->email,
                 'subject' => $mail->subject,
+                'message' => $mail->message,
                 'reply_to' => $mail->reply_to,
-                'attachment' => $mail->attachment,
+                'attachment_counter' => $mail->attachments()->count(),
                 'time' => $mail->pivot->sent_at,
                 'opened_at' => $mail->pivot->opened_at
             ];
@@ -50,8 +52,9 @@ class MailService
                 'name' => $mail->user_from->name,
                 'email' => $mail->user_from->email,
                 'subject' => $mail->subject,
+                'message' => $mail->message,
                 'reply_to' => $mail->reply_to,
-                'attachment' => $mail->attachment,
+                'attachment_counter' => $mail->attachments()->count(),
                 'time' => $mail->pivot->received_at,
                 'opened_at' => $mail->pivot->opened_at
             ];
@@ -64,13 +67,16 @@ class MailService
         $mails = $user->drafts()->get();
 
         return $mails->map(function ($mail) {
+            $userTo = $mail->user_to()->first();
+
             return [
                 'id' => $mail->id,
-                'name' => $mail->user_to->name ?? '(No address)',
-                'email' => $mail->user_to->email ?? '(No address)',
+                'name' => $userTo ? $userTo->name : '',
+                'email' => $userTo ? $userTo->email : '',
                 'subject' => $mail->subject,
+                'message' => $mail->message,
                 'reply_to' => $mail->reply_to,
-                'attachment' => $mail->attachment,
+                'attachment_counter' => $mail->attachments()->count(),
                 'time' => $mail->created_at,
                 'opened_at' => $mail->created_at
             ];
@@ -94,6 +100,16 @@ class MailService
                     'user_id' => $allowedFields['user_id_to'],
                     'mail_id' => $newDraft->id
                 ]);
+            }
+            if($request->hasFile('attachment')){
+                foreach ($request->file('attachment') as $file){
+                    $fileContent = base64_decode(file_get_contents($file->getRealPath()));
+                    Attachment::query()->create([
+                        'mail_id' => $newDraft->id,
+                        'filename' => $file->getClientOriginalName(),
+                        'file' => $fileContent
+                    ]);
+                }
             }
             return $newDraft;
         });
@@ -119,7 +135,18 @@ class MailService
                 'mail_id' => $newMail->id,
                 'received_at' => now()
             ]);
-            //$this->createTransactions($allowedFields['user_id_from'], $allowedFields['user_id_to'], $newMail->id);
+
+            if($request->hasFile('attachment')){
+                foreach ($request->file('attachment') as $file){
+                    $fileContent = base64_decode(file_get_contents($file->getRealPath()));
+                    Attachment::query()->create([
+                        'mail_id' => $newMail->id,
+                        'filename' => $file->getClientOriginalName(),
+                        'file' => $fileContent
+                    ]);
+                }
+            }
+
             return $newMail;
         });
     }
@@ -279,7 +306,8 @@ class MailService
      */
     public function deleteDraft($mailId, $userId): void
     {
-        $draftToDelete = Mail::query()->where('user_id_from', $userId)->where('is_draft', true)->find($mailId);
+        $user = User::query()->find($userId);
+        $draftToDelete = $user->drafts()->where('mail_id', $mailId)->first();
         if (!$draftToDelete) {
             throw new Exception('Not a draft');
         }
@@ -298,6 +326,13 @@ class MailService
         if($draftTransaction){
             $user_to = $draftTransaction->user()->first();
         }
+        $fileNames = [];
+        if($draft->attachments()->count() > 0){
+            $attachments = $draft->attachments()->get();
+            foreach ($attachments as $attachment){
+                $fileNames[] = $attachment->filename;
+            }
+        }
 
         return [
             'id' => $draft->id,
@@ -306,7 +341,8 @@ class MailService
             'name' => $user_to ? $user_to->name : '',
             'email' => $user_to ? $user_to->email : '',
             'subject' => $draft->subject,
-            'message' => $draft->message
+            'message' => $draft->message,
+            'attachment' => $fileNames,
         ];
     }
 }

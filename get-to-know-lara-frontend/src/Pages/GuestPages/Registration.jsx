@@ -94,7 +94,7 @@ const Registration = () => {
                 const {user, token} = response.data;
                 setUser(user);
                 storeToken(token);
-                navigate('/');
+                navigate('/dashboard');
             })
             .catch(error => {
                 if (error.response) {
@@ -119,10 +119,10 @@ const Registration = () => {
             <fieldset>
                 <legend className="text-sm-center fs-5 fst-italic">New on the page? Please, sign up!</legend>
 
-                <Form className="mt-5" onSubmit={submitRegistration} noValidate>
+                <Form name="registration-form" className="mt-5" onSubmit={submitRegistration} noValidate>
                     <Row>
+                        <Form.Label>Name</Form.Label>
                         <Form.Group as={Col} controlId="firstName">
-                            <Form.Label>Name</Form.Label>
                             <Form.Control
                                 className='mb-2'
                                 type="text"
@@ -138,7 +138,6 @@ const Registration = () => {
                         </Form.Group>
 
                         <Form.Group as={Col} controlId="lastName">
-                            <Form.Label> </Form.Label>
                             <Form.Control
                                 className='mb-2'
                                 type="text"
@@ -203,7 +202,7 @@ const Registration = () => {
                     {!registrationSuccess &&
                         <ErrorToastMessage toastHeader={"Registration failed"} toastMessage={toastMessage}/>
                     }
-                    <Button variant="secondary" type="submit">
+                    <Button variant="primary" type="submit">
                         {isLoading ? 'Signing up...' : 'Sign up'}
                     </Button>
                 </Form>

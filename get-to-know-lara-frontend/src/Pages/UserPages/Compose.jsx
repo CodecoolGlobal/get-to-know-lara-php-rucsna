@@ -8,17 +8,16 @@ const Compose = () => {
     const sendEmail = (request) => {
         axiosClient.post('/mail/send', request)
             .then(() => {
-            console.log("message successfully sent");
-            navigate('/inbox');
+            navigate('/');
             })
             .catch (error => console.error("error with sending message", error));
     };
 
     const saveDraft = (request) => {
+        console.log(request);
         axiosClient.post('/mail/draft', request)
             .then(() => {
-                console.log("draft successfully saved");
-                navigate('/drafts');
+                navigate('/');
             })
             .catch(error => console.error("error with saving draft", error));
     }

@@ -23,7 +23,7 @@ const Sent = () => {
     return (
         <div>
             {mails &&
-                <MailsTable mails={mails} setMails={setMails} getCurrent={getSentMails} label={"To: "}/>
+                <MailsTable mails={mails} getCurrent={getSentMails} label={"To: "}/>
             }
         </div>
     )
