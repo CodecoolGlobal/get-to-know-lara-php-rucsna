@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 const AttachmentUpload = ({handleFieldChange}) => {
     return(
         <Form.Group controlId="file-input" className="mb-3">
-            <Form.Label className="text-light">Attachment</Form.Label>
+            <Form.Label className="text-light">Attachments</Form.Label>
             <Form.Control
                 type="file"
                 accept="image/*, .pdf, audio/*, .doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
