@@ -121,8 +121,8 @@ const Registration = () => {
 
                 <Form name="registration-form" className="mt-5" onSubmit={submitRegistration} noValidate>
                     <Row>
+                        <Form.Label>Name</Form.Label>
                         <Form.Group as={Col} controlId="firstName">
-                            <Form.Label>Name</Form.Label>
                             <Form.Control
                                 className='mb-2'
                                 type="text"
@@ -138,7 +138,6 @@ const Registration = () => {
                         </Form.Group>
 
                         <Form.Group as={Col} controlId="lastName">
-                            <Form.Label> </Form.Label>
                             <Form.Control
                                 className='mb-2'
                                 type="text"
