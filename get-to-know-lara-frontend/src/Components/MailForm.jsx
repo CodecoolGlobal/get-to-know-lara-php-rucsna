@@ -8,6 +8,7 @@ import {Button, Card, FloatingLabel, Form, FormControl, InputGroup} from "react-
 import AttachmentUpload from "./AttachmentUpload.jsx";
 
 const MailForm = ({mail, onSend, onSave}) => {
+    const [draft, setDraft] = useState(false);
     const [form, setForm] = useState({
         user_id_to: "",
         email: "",
@@ -22,6 +23,7 @@ const MailForm = ({mail, onSend, onSave}) => {
     useEffect(() => {
         if(mail){
             setForm({...mail});
+            setDraft(true);
         }
     }, [mail]);
 
@@ -32,7 +34,6 @@ const MailForm = ({mail, onSend, onSave}) => {
         }
     },[errors]);
 
-    console.log('ATTACHMENT', form.attachment);
     const handleSave = () => {
         const formData = createFormData(true);
         if(mail){
@@ -80,8 +81,6 @@ const MailForm = ({mail, onSend, onSave}) => {
         }
     };
 
-    console.log('FORM', form);
-
     return (
         <FormContainer>
             <Card>
@@ -114,6 +113,22 @@ const MailForm = ({mail, onSend, onSave}) => {
                         </InputGroup>
 
                         <AttachmentUpload handleFieldChange={handleFieldChange}/>
+
+                        {draft && (form.attachment.length > 0) ?
+                            form.attachment.map((filename, index) => (
+                                <InputGroup key={index} className="col-md-6">
+                                    <Form.Control
+                                        disabled
+                                        aria-label="attachment"
+                                        aria-describedby="basic-addon2"
+                                        value={filename ?? ''}
+                                    />
+                                    <Button variant="outline-warning" id="button-addon2">
+                                        X
+                                    </Button>
+                                </InputGroup>
+                            )) : null
+                        }
 
                         <InputGroup>
                             <Button type="submit" name="sendButton" className="btn-success btn-outline-light">Send</Button>
