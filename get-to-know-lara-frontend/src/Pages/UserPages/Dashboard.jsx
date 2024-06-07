@@ -3,15 +3,25 @@ import Compose from "./Compose.jsx";
 import Drafts from "./Drafts.jsx";
 import Sent from "./Sent.jsx";
 import Bin from "./Bin.jsx";
+import {Badge} from "react-bootstrap";
+import {useState} from "react";
 
 
 const Dashboard = () => {
+    const [counter, setCounter] = useState(0);
+
     return (
         <div className="d-flex align-items-start">
             <div className="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <button className="nav-link active" id="v-pills-inbox-tab" data-bs-toggle="pill"
                         data-bs-target="#v-pills-inbox" type="button" role="tab" aria-controls="v-pills-inbox"
                         aria-selected="true"><i className="bi bi-mailbox"></i> Inbox
+                    {counter > 0 ?
+                        <>
+                            <Badge bg="secondary">{counter}</Badge>
+                            <span className="visually-hidden">unread messages</span>
+                        </> : null
+                    }
                 </button>
                 <button className="nav-link" id="v-pills-compose-tab" data-bs-toggle="pill"
                         data-bs-target="#v-pills-compose" type="button" role="tab" aria-controls="v-pills-compose"
@@ -32,7 +42,7 @@ const Dashboard = () => {
             </div>
             <div className="tab-content" id="v-pills-tabContent">
                 <div className="tab-pane fade show active" id="v-pills-inbox" role="tabpanel"
-                     aria-labelledby="v-pills-inbox-tab" tabIndex="0"><Inbox/>
+                     aria-labelledby="v-pills-inbox-tab" tabIndex="0"><Inbox setCounter={setCounter}/>
                 </div>
                 <div className="tab-pane fade" id="v-pills-compose" role="tabpanel"
                      aria-labelledby="v-pills-compose-tab" tabIndex="0"><Compose/>
