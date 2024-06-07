@@ -2,9 +2,10 @@ import {useState} from "react";
 import axiosClient from "../axios-client.js";
 import PropTypes from "prop-types";
 import {Form, InputGroup} from "react-bootstrap";
+import OverlayInfoMessage from "./OverlayInfoMessage.jsx";
 
 const SearchBar = ({setUser, email}) => {
-    const [input, setInput] = useState(email ?? "");
+    const [input, setInput] = useState("");
     const [results, setResults] = useState([]);
 
     const fetchAddress = (input) => {
@@ -29,9 +30,12 @@ const SearchBar = ({setUser, email}) => {
         }
     };
 
+    console.log(input);
+
     return (
         <InputGroup>
             <InputGroup.Text className="text-light" id="recipient-address">To:</InputGroup.Text>
+            <OverlayInfoMessage info="Start typing a name or an email address" placement="top-start">
             <Form.Control
                 placeholder={input === "" ? "example@email.com" : email}
                 aria-label="recipient-address"
@@ -40,6 +44,7 @@ const SearchBar = ({setUser, email}) => {
                 onChange={handleChange}
                 list="result-list"
             />
+            </OverlayInfoMessage>
             <datalist id="result-list">
                 {
                     results && results.map((result, id) => {
