@@ -1,14 +1,23 @@
-import {describe, test, expect, beforeEach} from "vitest";
+import {describe, test, expect, beforeEach, vi} from "vitest";
 import {fireEvent, render, screen, waitFor} from "@testing-library/react";
 import Registration from "../../src/Pages/GuestPages/Registration.jsx";
+import axiosClient from "../../src/axios-client.js";
 import {MemoryRouter, Route, Routes} from "react-router-dom";
+import Dashboard from "../../src/Pages/UserPages/Dashboard.jsx";
+import UserLayout from "../../src/Pages/Layouts/UserLayout.jsx";
+
+
+vi.mock("../../src/axios-client.js");
 
 describe('Register component', () => {
     beforeEach(() => {
+        axiosClient.post.mockReset();
         render(
             <MemoryRouter initialEntries={["/guest/registration"]}>
                 <Routes>
                     <Route path="/guest/registration" element={<Registration/>} />
+                    <Route path="/" element={<UserLayout/>} />
+                    <Route path="/dashboard" element={<Dashboard/>} />
                 </Routes>
             </MemoryRouter>);
     });
@@ -99,18 +108,31 @@ describe('Register component', () => {
 
     test('calls submitRegistration on form submission', async () => {
         // arrange
-        const firstNameInput = screen.getByPlaceholderText('First name', {exact: false});
-        const lastNameInput = screen.getByPlaceholderText('Last name', {exact: false});
-        const emailInput = screen.getByLabelText('Email address', {exact: false});
-        const passwordInput = screen.getByLabelText('Password', {exact: true});
-        const passConfInput = screen.getByLabelText('Confirm password', {exact: false});
+        const newUserPayload = {
+            name: 'Amy Santiago',
+            email: 'santiago@nypd.com',
+            password: 'password123',
+            password_confirmation: 'password123'
+        };
+
+        const newUserData = {
+            id: 1,
+            ...newUserPayload
+        };
+
+        axiosClient.post.mockResolvedValue({
+            data: {
+                user: newUserData,
+                toke: 'test_token'
+            }
+        });
 
         // act
-        fireEvent.change(firstNameInput, {target: {value: 'Amy'}});
-        fireEvent.change(lastNameInput, {target: {value: 'Santiago'}});
-        fireEvent.change(emailInput, {target: {value: 'santiago@nypd.com'}});
-        fireEvent.change(passwordInput, {target: {value: 'password123'}});
-        fireEvent.change(passConfInput, {target: {value: 'password123'}});
+        fireEvent.change(screen.getByPlaceholderText('First name', {exact: false}), {target: {value: 'Amy'}});
+        fireEvent.change(screen.getByPlaceholderText('Last name', {exact: false}), {target: {value: 'Santiago'}});
+        fireEvent.change(screen.getByLabelText('Email address', {exact: false}), {target: {value: 'santiago@nypd.com'}});
+        fireEvent.change(screen.getByLabelText('Password', {exact: true}), {target: {value: 'password123'}});
+        fireEvent.change( screen.getByLabelText('Confirm password', {exact: false}), {target: {value: 'password123'}});
 
         fireEvent.submit(screen.getByRole('button', {name: 'Sign up'}));
 
@@ -122,8 +144,16 @@ describe('Register component', () => {
         });
 
         await waitFor(() => {
-            expect(window.location.pathname).toBe('/');
+            expect(axiosClient.post).toHaveBeenCalledWith('/authentication/register', newUserPayload);
         });
 
-    })
+
+        // checking for navigation
+        await waitFor(() => {
+            expect(window.location.pathname).toBe('/');
+        });
+        await waitFor(() => {
+            expect(screen.findByText('Amy Santiago', {exact: false})).toBeInTheDocument();
+        });
+    });
 })
