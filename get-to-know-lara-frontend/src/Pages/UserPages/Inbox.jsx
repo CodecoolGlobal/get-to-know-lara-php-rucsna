@@ -2,8 +2,9 @@ import {useEffect, useState} from "react";
 import axiosClient from "../../axios-client.js";
 import {useStateContext} from "../../contexts/ContextProvider.jsx";
 import MailsTable from "../../Components/MailsTable.jsx";
+import PropTypes from "prop-types";
 
-const Inbox = () => {
+const Inbox = ({setCounter}) => {
     const [mails, setMails] = useState([]);
     const {user} = useStateContext();
 
@@ -16,7 +17,11 @@ const Inbox = () => {
             .then(response => {
                 const data = response.data;
                 setMails(data.mails);
-
+                console.log(data.mails);
+                if(mails) {
+                    const newMails = data.mails.filter(mail => mail.opened_at === null).length;
+                    setCounter(newMails);
+                }
             })
             .catch(error => {
                 console.error("error with getting mails", error);
@@ -30,6 +35,10 @@ const Inbox = () => {
             }
         </div>
     )
+};
+
+Inbox.propTypes = {
+    setCounter: PropTypes.func
 };
 
 export default Inbox;
