@@ -55,7 +55,7 @@ class MailController extends Controller
     /**
      * Send a new mail.
      * Handle mail sending using the provided request data.
-     * Validate the input data using SendMailRequest via the MailService
+     * Validate the input data using SendMailRequest via the MailService.
      *
      * @param SendMailRequest $request
      * @return JsonResponse
