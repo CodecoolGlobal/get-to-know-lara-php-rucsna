@@ -84,8 +84,8 @@ class MailService
 
 
     /**
-     * Get mails the user received.
-     * Display a listing of the mails' data with sender name and address.
+     * Get mails the user deleted.
+     * Display a listing of the mails' data with sender/receiver name and address.
      * Display the number of the attachment's if there is any.
      *
      * @param string $userId
@@ -101,8 +101,8 @@ class MailService
         return $mails->map(function ($mail) {
             return [
                 'id' => $mail->id,
-                'name' => $mail->user_to->name ?? '(No address)',
-                'email' => $mail->user_to->email ?? '(No address)',
+                'name' => $mail->user_to->name ?? $mail->user_from->name,
+                'email' => $mail->user_to->email ?? $mail->user_from->email,
                 'subject' => $mail->subject,
                 'reply_to' => $mail->reply_to,
                 'attachment' => $mail->attachment,
@@ -114,7 +114,7 @@ class MailService
 
 
     /**
-     * Create a new mail object from the form request.
+     * Create a new mail object from the form request, set the 'is_draft' field false.
      * Create 2 transaction objects for the sender and the receiver.
      * Use HandlesAttachments trait to save attachment files.
      *
@@ -148,7 +148,7 @@ class MailService
 
 
     /**
-     * Update an existing mail object from the form request.
+     * Update an existing mail object from the form request, set the 'is_draft' field false.
      * Check the transactions related to the mail.
      * Update the sender's transaction with current sending date.
      * Update the recipient's transaction if exists, create a new if not.
@@ -196,13 +196,13 @@ class MailService
     /**
      * Display a mail by user id and mail id.
      * Update the 'opened_at' field with timestamp if null.
-     * Display mail data, attachments, username and address.
+     * Return mail data, attachments, username and address.
      *
      * @param TransactionUpdateRequest $request
-     * @return Model|Collection|Builder|array|null
+     * @return array
      * @throws UnauthorizedException
      */
-    public function displayMail(TransactionUpdateRequest $request): Model|Collection|Builder|array|null
+    public function displayMail(TransactionUpdateRequest $request): array
     {
         $displayTransaction = Transaction::query()
             ->where('user_id', $request['user_id'])
@@ -214,18 +214,14 @@ class MailService
 
         if ($displayTransaction->whereNull('opened_at')->exists()) {
             $displayTransaction->update(['opened_at' => now()]);
+            $displayTransaction->refresh();
         }
-        $displayTransaction->refresh();
-        $userFrom = $displayTransaction->mail->user_from()->first();
-        $userTo = $displayTransaction->mail->user_to()->first();
 
-        $fileNames = [];
-        if($displayTransaction->mail->attachments()->count() > 0){
-            $attachments = $displayTransaction->mail->attachments()->get();
-            foreach ($attachments as $attachment){
-                $fileNames[] = $attachment->filename;
-            }
-        }
+        $mail = $displayTransaction->mail;
+        $userFrom = $mail->user_from()->first();
+        $userTo = $mail->user_to()->first();
+
+        $fileNames = $mail->attachments->pluck('filename')->toArray();
 
         return
             [
