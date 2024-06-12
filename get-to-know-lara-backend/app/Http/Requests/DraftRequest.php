@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DraftRequest extends FormRequest
@@ -17,7 +18,7 @@ class DraftRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
@@ -32,6 +33,12 @@ class DraftRequest extends FormRequest
 
     public function allowed(): array
     {
-        return $this->only(['user_id_from', 'user_id_to', 'subject', 'message', 'reply_to']);
+        return $this->only([
+            'user_id_from',
+            'user_id_to',
+            'subject',
+            'message',
+            'reply_to'
+        ]);
     }
 }
