@@ -2,30 +2,40 @@
 
 namespace App\Services;
 
-use App\Http\Requests\DraftRequest;
 use App\Http\Requests\SendMailRequest;
-use App\Models\Attachment;
+use App\Http\Requests\TransactionUpdateRequest;
 use App\Models\Mail;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Trait\HandlesAttachments;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\HigherOrderBuilderProxy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HigherOrderCollectionProxy;
 use Illuminate\Validation\UnauthorizedException;
-use Spatie\FlareClient\Http\Exceptions\NotFound;
 
 class MailService
 {
+    use HandlesAttachments;
+
     /**
+     * Get mails the user sent.
+     * Display a listing of the mails' data with receiver name and address.
+     * Display the number of the attachment's if there is any.
+     *
+     * @param string $userId
+     * @return mixed
      * @throws Exception
      */
-    public function getMailsFromUser($userId)
+    public function getMailsFromUser(string $userId): mixed
     {
         $user = User::query()->find($userId);
-        $mails = $user->sentMails()->get();
+        if (!$user) throw new Exception('User not found');
 
+        $mails = $user->sentMails()->get();
         return $mails->map(function ($mail) {
             return [
                 'id' => $mail->id,
@@ -41,11 +51,22 @@ class MailService
         });
     }
 
-    public function getMailsToUser($userId)
+
+    /**
+     * Get mails the user received.
+     * Display a listing of the mails' data with sender name and address.
+     * Display the number of the attachment's if there is any.
+     *
+     * @param string $userId
+     * @return mixed
+     * @throws Exception
+     */
+    public function getMailsToUser(string $userId): mixed
     {
         $user = User::query()->find($userId);
-        $mails = $user->receivedMails()->get();
+        if (!$user) throw new Exception('User not found');
 
+        $mails = $user->receivedMails()->get();
         return $mails->map(function ($mail) {
             return [
                 'id' => $mail->id,
@@ -61,66 +82,49 @@ class MailService
         });
     }
 
-    public function getDraftsByUser($userId)
+
+    /**
+     * Get mails the user received.
+     * Display a listing of the mails' data with sender name and address.
+     * Display the number of the attachment's if there is any.
+     *
+     * @param string $userId
+     * @return mixed
+     * @throws Exception
+     */
+    public function getDeletedMails(string $userId): mixed
     {
         $user = User::query()->find($userId);
-        $mails = $user->drafts()->get();
+        if (!$user) throw new Exception('User not found');
 
+        $mails = $user->deletedMails()->get();
         return $mails->map(function ($mail) {
-            $userTo = $mail->user_to()->first();
-
             return [
                 'id' => $mail->id,
-                'name' => $userTo ? $userTo->name : '',
-                'email' => $userTo ? $userTo->email : '',
+                'name' => $mail->user_to->name ?? '(No address)',
+                'email' => $mail->user_to->email ?? '(No address)',
                 'subject' => $mail->subject,
-                'message' => $mail->message,
                 'reply_to' => $mail->reply_to,
-                'attachment_counter' => $mail->attachments()->count(),
-                'time' => $mail->created_at,
-                'opened_at' => $mail->created_at
+                'attachment' => $mail->attachment,
+                'time' => $mail->pivot_deleted_at,
+                'opened_at' => $mail->pivot->opened_at
             ];
         });
     }
 
-    public function createDraft(DraftRequest $request)
+
+    /**
+     * Create a new mail object from the form request.
+     * Create 2 transaction objects for the sender and the receiver.
+     * Use HandlesAttachments trait to save attachment files.
+     *
+     * @param SendMailRequest $request
+     * @return mixed
+     */
+    public function sendNewMail(SendMailRequest $request): mixed
     {
         return DB::transaction(function () use ($request) {
             $allowedFields = $request->allowed();
-
-            $newDraft = Mail::query()->create($allowedFields);
-
-            Transaction::query()->create([
-                'user_id' => $allowedFields['user_id_from'],
-                'mail_id' => $newDraft->id,
-                'opened_at' => now()
-            ]);
-            if ($allowedFields['user_id_to']) {
-                Transaction::query()->create([
-                    'user_id' => $allowedFields['user_id_to'],
-                    'mail_id' => $newDraft->id
-                ]);
-            }
-            if($request->hasFile('attachment')){
-                foreach ($request->file('attachment') as $file){
-                    $fileContent = base64_decode(file_get_contents($file->getRealPath()));
-                    Attachment::query()->create([
-                        'mail_id' => $newDraft->id,
-                        'filename' => $file->getClientOriginalName(),
-                        'file' => $fileContent
-                    ]);
-                }
-            }
-            return $newDraft;
-        });
-
-    }
-
-    public function sendNewMail(SendMailRequest $request)
-    {
-        return DB::transaction(function () use ($request) {
-            $allowedFields = $request->allowed();
-
             $newMail = Mail::query()->create($allowedFields);
 
             Transaction::query()->create([
@@ -129,29 +133,32 @@ class MailService
                 'sent_at' => now(),
                 'opened_at' => now()
             ]);
-
             Transaction::query()->create([
                 'user_id' => $allowedFields['user_id_to'],
                 'mail_id' => $newMail->id,
                 'received_at' => now()
             ]);
 
-            if($request->hasFile('attachment')){
-                foreach ($request->file('attachment') as $file){
-                    $fileContent = base64_decode(file_get_contents($file->getRealPath()));
-                    Attachment::query()->create([
-                        'mail_id' => $newMail->id,
-                        'filename' => $file->getClientOriginalName(),
-                        'file' => $fileContent
-                    ]);
-                }
-            }
+            $mailId = $newMail->id;
+            $this->handleAttachments($request, $mailId);
 
             return $newMail;
         });
     }
 
-    public function sendUpdatedMail($mailId, SendMailRequest $request)
+
+    /**
+     * Update an existing mail object from the form request.
+     * Check the transactions related to the mail.
+     * Update the sender's transaction with current sending date.
+     * Update the recipient's transaction if exists, create a new if not.
+     * Use HandlesAttachments trait to save attachment files.
+     *
+     * @param string $mailId
+     * @param SendMailRequest $request
+     * @return mixed
+     */
+    public function sendUpdatedMail(string $mailId, SendMailRequest $request): mixed
     {
         return DB::transaction(function () use ($mailId, $request) {
             $allowedFields = $request->allowed();
@@ -178,15 +185,24 @@ class MailService
                     'received_at' => now()
                 ]);
             }
-            //$this->createTransactions($allowedFields['user_id_from'], $allowedFields['user_id_to'], $mailToUpdate->id);
+
+            $this->handleAttachments($request, $mailId);
+
             return $mailToUpdate;
         });
     }
 
+
     /**
-     * @throws Exception
+     * Display a mail by user id and mail id.
+     * Update the 'opened_at' field with timestamp if null.
+     * Display mail data, attachments, username and address.
+     *
+     * @param TransactionUpdateRequest $request
+     * @return Model|Collection|Builder|array|null
+     * @throws UnauthorizedException
      */
-    public function displayMail($request): Model|Collection|Builder|array|null
+    public function displayMail(TransactionUpdateRequest $request): Model|Collection|Builder|array|null
     {
         $displayTransaction = Transaction::query()
             ->where('user_id', $request['user_id'])
@@ -202,8 +218,13 @@ class MailService
         $displayTransaction->refresh();
         $userFrom = $displayTransaction->mail->user_from()->first();
         $userTo = $displayTransaction->mail->user_to()->first();
-        if(!$userTo){
-            throw new NotFound('No mail available');
+
+        $fileNames = [];
+        if($displayTransaction->mail->attachments()->count() > 0){
+            $attachments = $displayTransaction->mail->attachments()->get();
+            foreach ($attachments as $attachment){
+                $fileNames[] = $attachment->filename;
+            }
         }
 
         return
@@ -212,21 +233,27 @@ class MailService
                 'subject' => $displayTransaction->mail->subject,
                 'message' => $displayTransaction->mail->message,
                 'reply_to' => $displayTransaction->mail->reply_to,
-                'attachment' => $displayTransaction->mail->attachment,
+                'attachment' => $fileNames,
                 'sent' => $displayTransaction->sent_at,
                 'received' => $displayTransaction->received_at,
                 'opened_at' => $displayTransaction->opened_at,
-                'user_to_name' => $userTo->name,
-                'user_to_email' => $userTo->email,
-                'user_from_name' => $userFrom->name,
-                'user_from_email' => $userFrom->email
+                'user_to_name' => $userTo->name ?? '',
+                'user_to_email' => $userTo->email ?? '',
+                'user_from_name' => $userFrom->name ?? '',
+                'user_from_email' => $userFrom->email ?? ''
             ];
     }
 
+
     /**
+     * Soft delete the specified mail via transactions table for the specified user.
+     * Update the 'deleted_at' field with timestamp if null.
+     *
+     * @param TransactionUpdateRequest $request
+     * @return Model|Collection|Builder|array|null
      * @throws Exception
      */
-    public function deleteMail($request): Model|Collection|Builder|array|null
+    public function deleteMail(TransactionUpdateRequest $request): Model|Collection|Builder|array|null
     {
         $deleteTransaction = Transaction::query()
             ->where('user_id', $request['user_id'])
@@ -235,11 +262,11 @@ class MailService
         if (!$deleteTransaction) {
             throw new UnauthorizedException('Cannot access this content');
         }
-        if ($deleteTransaction->deleted_at != null){
+        if ($deleteTransaction->deleted_at != null) {
             throw new Exception('Mail is already deleted');
         }
 
-        if($deleteTransaction->deleted_at === null) {
+        if ($deleteTransaction->deleted_at === null) {
             $deleteTransaction->update(['deleted_at' => now()]);
         }
         $deleteTransaction->refresh();
@@ -247,32 +274,16 @@ class MailService
         return $deleteTransaction->mail()->first();
     }
 
-    /**
-     * @throws Exception
-     */
-    public function getDeletedMails($userId)
-    {
-        $user = User::query()->find($userId);
-        $mails = $user->deletedMails()->get();
-
-        return $mails->map(function ($mail) {
-            return [
-                'id' => $mail->id,
-                'name' => $mail->user_to->name ?? '(No address)',
-                'email' => $mail->user_to->email ?? '(No address)',
-                'subject' => $mail->subject,
-                'reply_to' => $mail->reply_to,
-                'attachment' => $mail->attachment,
-                'time' => $mail->pivot_deleted_at,
-                'opened_at' => $mail->pivot->opened_at
-            ];
-        });
-    }
 
     /**
+     * Set back original state of a mail - undelete, mark as not read.
+     * Set the connecting fields to null.
+     *
+     * @param TransactionUpdateRequest $request
+     * @return HigherOrderBuilderProxy|Model|HigherOrderCollectionProxy|mixed|object
      * @throws Exception
      */
-    public function restoreMail($request)
+    public function restoreMail(TransactionUpdateRequest $request): mixed
     {
         $user = User::query()->find($request['user_id']);
         $mailToRestore = $user->mails->where('id', $request['mail_id'])->first();
@@ -299,50 +310,5 @@ class MailService
             ->update(["{$field}" => null]);
 
         return $mailToRestore;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function deleteDraft($mailId, $userId): void
-    {
-        $user = User::query()->find($userId);
-        $draftToDelete = $user->drafts()->where('mail_id', $mailId)->first();
-        if (!$draftToDelete) {
-            throw new Exception('Not a draft');
-        }
-        $draftToDelete->transactions()->delete();
-
-        $draftToDelete->delete();
-    }
-
-    public function displayDraft($request): array
-    {
-        $user = User::query()->find($request['user_id']);
-        $draft = $user->drafts()->where('mail_id', $request['mail_id'])->first();
-
-        $user_to = null;
-        $draftTransaction = $draft->transactions()->where('user_id', '!=', $request['user_id'])->first();
-        if($draftTransaction){
-            $user_to = $draftTransaction->user()->first();
-        }
-        $fileNames = [];
-        if($draft->attachments()->count() > 0){
-            $attachments = $draft->attachments()->get();
-            foreach ($attachments as $attachment){
-                $fileNames[] = $attachment->filename;
-            }
-        }
-
-        return [
-            'id' => $draft->id,
-            'user_id_from' => $request['user_id'],
-            'user_id_to' => $user_to ? $user_to->id : null,
-            'name' => $user_to ? $user_to->name : '',
-            'email' => $user_to ? $user_to->email : '',
-            'subject' => $draft->subject,
-            'message' => $draft->message,
-            'attachment' => $fileNames,
-        ];
     }
 }
