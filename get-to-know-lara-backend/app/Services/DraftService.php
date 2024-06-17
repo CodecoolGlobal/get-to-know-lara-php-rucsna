@@ -139,7 +139,11 @@ class DraftService
         $draftTransaction = $draft->transactions->first();
         $user_to = $draftTransaction ? $draftTransaction->user()->first() : null;
 
-        $fileNames = $draft->attachments->pluck('filename')->toArray();
+        $fileNames = $draft->attachments->map(function($attachment) {return[
+            'id' => $attachment->id,
+            'filename' => $attachment->filename
+        ];
+        })->toArray();
 
         return [
             'id' => $draft->id,
@@ -157,14 +161,14 @@ class DraftService
     /**
      * Delete a specified draft related to a user.
      * Delete the draft's transaction(s) together.
+     * Delete the attachments if the draft has any.
      *
      * @param string $mailId
      * @param string $userId
      * @return void
      * @throws Exception
      */
-    public
-    function deleteDraft(string $mailId, string $userId): void
+    public function deleteDraft(string $mailId, string $userId): void
     {
         $user = User::query()->find($userId);
         if (!$user) throw new Exception('User not found');
@@ -173,6 +177,7 @@ class DraftService
         if (!$draftToDelete) throw new Exception('Draft not found');
 
         DB::transaction(function () use ($draftToDelete) {
+            $draftToDelete->attachments()->delete();
             $draftToDelete->transactions()->delete();
             $draftToDelete->delete();
         });

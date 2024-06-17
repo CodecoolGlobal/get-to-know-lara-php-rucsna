@@ -221,7 +221,11 @@ class MailService
         $userFrom = $mail->user_from()->first();
         $userTo = $mail->user_to()->first();
 
-        $fileNames = $mail->attachments->pluck('filename')->toArray();
+        $fileNames = $mail->attachments->map(function($attachment) {return[
+            'id' => $attachment->id,
+            'filename' => $attachment->filename
+            ];
+        })->toArray();
 
         return
             [
