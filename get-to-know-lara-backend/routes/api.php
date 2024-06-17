@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\DraftController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/draft/display', [DraftController::class, 'displayDraft']);
     Route::delete('/draft/deleteDraft/{mailId}/{userId}', [DraftController::class, 'deleteDraft']);
 
+    // attachment related routes
+    Route::get('/attachments/{attachmentId}/{mailId}/{userId}', [AttachmentController::class, 'download']);
+
+    // route for searching users by email or name
     Route::get('/user/addresses/{term}', [UserController::class, 'getUsersEmailAddresses']);
 });
 
