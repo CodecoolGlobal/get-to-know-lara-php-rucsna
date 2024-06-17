@@ -15,7 +15,7 @@ const Compose = () => {
 
     const saveDraft = (request) => {
         console.log(request);
-        axiosClient.post('/mail/draft', request)
+        axiosClient.post('/draft', request)
             .then(() => {
                 navigate('/');
             })

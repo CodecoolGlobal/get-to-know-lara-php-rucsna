@@ -12,7 +12,7 @@ const Sent = () => {
     }, [user.id]);
 
     const getSentMails = () => {
-        axiosClient.get(`/mail/mailsByUser/sent/${user.id}`)
+        axiosClient.get(`/mails/sent/${user.id}`)
             .then(response => {
                 setMails(response.data.mails);
                 console.log(response.data.mails);
