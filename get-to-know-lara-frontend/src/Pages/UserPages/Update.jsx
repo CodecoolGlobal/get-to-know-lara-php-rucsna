@@ -12,7 +12,7 @@ const Update = () => {
 
 
     useEffect(() => {
-        axiosClient.patch('/mail/display/draft', {user_id: user.id, mail_id: id})
+        axiosClient.patch('/draft/display', {user_id: user.id, mail_id: id})
             .then(response => setMail(response.data.mail))
             .catch(error => console.error("error fetching draft", error));
     }, [id, user.id]);
@@ -20,7 +20,6 @@ const Update = () => {
     console.log('draft', mail);
 
     const sendEmail = (request) => {
-        console.log('update mail request', request);
         axiosClient.post(`/mail/send/${id}`, request)
             .then(() => {
                 console.log("message successfully sent");
@@ -30,7 +29,7 @@ const Update = () => {
     };
 
     const saveDraft = (request) => {
-        axiosClient.post('/mail/draft', request)
+        axiosClient.post('/draft', request)
             .then(() => {
                 console.log("draft successfully saved");
             })

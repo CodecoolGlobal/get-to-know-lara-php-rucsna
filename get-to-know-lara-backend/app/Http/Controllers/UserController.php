@@ -8,9 +8,13 @@ use Illuminate\Support\Collection;
 class UserController extends Controller
 {
     /**
-     * Display a listing of the users' email addresses.
+     * Display a listing of the users' name and email addresses.
+     * Search in the database by the term parameter.
+     *
+     * @param string $term
+     * @return Collection
      */
-    public function getUsersEmailAddresses($term): Collection
+    public function getUsersEmailAddresses(string $term): Collection
     {
         $users = User::query()
             ->where(function($query) use ($term){

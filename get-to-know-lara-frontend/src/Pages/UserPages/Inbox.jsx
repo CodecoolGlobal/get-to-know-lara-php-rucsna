@@ -13,7 +13,7 @@ const Inbox = ({setCounter}) => {
     }, [user.id]);
 
     const getInbox = () => {
-        axiosClient.get(`/mail/mailsByUser/inbox/${user.id}`)
+        axiosClient.get(`/mails/inbox/${user.id}`)
             .then(response => {
                 const data = response.data;
                 setMails(data.mails);

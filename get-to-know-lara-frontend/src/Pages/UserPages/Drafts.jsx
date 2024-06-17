@@ -12,7 +12,7 @@ const Drafts = () => {
     }, [user.id]);
 
     const getDrafts = () => {
-        axiosClient.get(`/mail/mailsByUser/draft/${user.id}`)
+        axiosClient.get(`/drafts/${user.id}`)
             .then(response => {
                 setMails(response.data.mails);
                 console.log(response.data.mails);

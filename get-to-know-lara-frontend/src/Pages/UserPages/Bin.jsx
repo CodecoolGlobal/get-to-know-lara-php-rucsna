@@ -12,7 +12,7 @@ const Bin = () => {
     }, [user.id]);
 
     const getDeletedMails = () => {
-        axiosClient.get(`/mail/mailsByUser/deleted/${user.id}`)
+        axiosClient.get(`/mails/deleted/${user.id}`)
             .then(response => {
                 setMails(response.data.mails);
                 console.log(response.data.mails);
